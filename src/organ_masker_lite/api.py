@@ -97,6 +97,11 @@ class OrganMaskPredictor:
         )
         return self
 
+    def clear_prompts(self) -> OrganMaskPredictor:
+        """Drop all added prompts, keeping the current volume/level (for re-previewing)."""
+        self._prompts = []
+        return self
+
     def add_box(self, frame_index: int, box, obj_id: int = 0) -> OrganMaskPredictor:
         """Add a box prompt ``[x_min, y_min, x_max, y_max]`` (SAM2 convention)."""
         self._require_volume()

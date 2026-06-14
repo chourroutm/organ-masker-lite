@@ -64,6 +64,25 @@ def _build_parser() -> argparse.ArgumentParser:
     mask.add_argument("--overwrite", action="store_true", help="Overwrite an existing output")
     mask.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     mask.set_defaults(func=_cmd_mask)
+
+    interactive = sub.add_parser(
+        "interactive", help="Open a napari session to place landmarks and export a mask."
+    )
+    interactive.add_argument("input", help="Path to the input OME-Zarr v0.5 store")
+    interactive.add_argument(
+        "--backend", default="sam2", help="Segmentation backend (default: sam2)"
+    )
+    interactive.add_argument(
+        "--level", type=int, default=COARSEST_LEVEL, help="Multiscale level (default: coarsest)"
+    )
+    interactive.add_argument("--model-dir", default=None, help="Weights directory override")
+    interactive.add_argument(
+        "--no-download",
+        action="store_false",
+        dest="allow_download",
+        help="Disable weight auto-download",
+    )
+    interactive.set_defaults(func=_cmd_interactive)
     return parser
 
 
@@ -108,6 +127,29 @@ def _cmd_mask(args: argparse.Namespace) -> int:
         return 1
 
     print(str(out))
+    return 0
+
+
+def _cmd_interactive(args: argparse.Namespace) -> int:
+    from .interactive import InteractiveSession
+    from .io.reader import ReaderError
+    from .io.validate import ValidationError
+
+    try:
+        session = InteractiveSession(
+            args.input,
+            backend=args.backend,
+            level=args.level,
+            model_dir=args.model_dir,
+            allow_download=args.allow_download,
+        )
+        session.launch()
+    except ImportError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    except (ValidationError, ReaderError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     return 0
 
 

@@ -206,12 +206,12 @@ preview updates, export a valid OME-Zarr v0.5 mask.
 
 ### Tests for User Story 6 (write FIRST)
 
-- [ ] T053 [US6] Interactive session smoke test (marked skip-if-no-napari/display): place positive then negative landmark, preview updates, export valid OME-Zarr v0.5, in `tests/integration/test_us6_interactive.py`
+- [X] T053 [US6] Interactive session smoke test (marked skip-if-no-napari/display): place positive then negative landmark, preview updates, export valid OME-Zarr v0.5, in `tests/integration/test_us6_interactive.py`
 
 ### Implementation for User Story 6
 
-- [ ] T054 [US6] Implement napari interactive session calling the shared predictor/engine in `src/organ_masker_lite/interactive.py`
-- [ ] T055 [US6] Add the `interactive` CLI subcommand (requires `[interactive]` extra) in `src/organ_masker_lite/cli.py`
+- [X] T054 [US6] Implement napari interactive session calling the shared predictor/engine in `src/organ_masker_lite/interactive.py`
+- [X] T055 [US6] Add the `interactive` CLI subcommand (requires `[interactive]` extra) in `src/organ_masker_lite/cli.py`
 
 **Checkpoint**: All user stories functional.
 
