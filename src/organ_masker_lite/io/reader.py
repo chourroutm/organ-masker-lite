@@ -56,13 +56,18 @@ class OmeZarrReader:
         """The coarsest level (highest index) is the default (research R5)."""
         return self.n_levels - 1
 
+    def describe_levels(self) -> str:
+        """Human-readable list of available levels and their shapes (for error reporting)."""
+        return ", ".join(f"{lvl.index} {tuple(lvl.shape)}" for lvl in self.levels)
+
     def resolve_level(self, level: int) -> int:
         """Resolve a requested level, mapping the COARSEST sentinel; validate bounds (FR-003)."""
         if level == COARSEST_LEVEL:
             return self.default_level()
         if not (0 <= level < self.n_levels):
-            available = ", ".join(str(lvl.index) for lvl in self.levels)
-            raise ReaderError(f"level {level} does not exist; available levels: {available}")
+            raise ReaderError(
+                f"level {level} does not exist; available levels: {self.describe_levels()}"
+            )
         return level
 
     def level_shape(self, level: int) -> tuple[int, ...]:

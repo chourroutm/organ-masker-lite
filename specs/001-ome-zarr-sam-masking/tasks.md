@@ -142,12 +142,12 @@ level aborts with the available list; coarser level is faster.
 
 ### Tests for User Story 3 (write FIRST)
 
-- [ ] T043 [US3] Integration test: valid level runs and output grid matches the level; missing level reports available levels and exits non-zero with no partial output; default (coarsest) level applied when unspecified, in `tests/integration/test_us3_levels.py`
-- [ ] T044 [US3] Integration test (slow-marked): coarser level end-to-end runtime < finer level on the same input, in `tests/integration/test_us3_level_speed.py`
+- [X] T043 [US3] Integration test: valid level runs and output grid matches the level; missing level reports available levels and exits non-zero with no partial output; default (coarsest) level applied when unspecified, in `tests/integration/test_us3_levels.py`
+- [X] T044 [US3] Integration test (slow-marked): coarser level end-to-end runtime < finer level on the same input, in `tests/integration/test_us3_level_speed.py`
 
 ### Implementation for User Story 3
 
-- [ ] T045 [US3] Implement level validation, coarsest-as-default selection, and available-levels reporting in `src/organ_masker_lite/io/reader.py` and `src/organ_masker_lite/config.py`, wired through `cli.py`
+- [X] T045 [US3] Implement level validation, coarsest-as-default selection, and available-levels reporting in `src/organ_masker_lite/io/reader.py` and `src/organ_masker_lite/config.py`, wired through `cli.py`
 
 **Checkpoint**: Robust level selection.
 

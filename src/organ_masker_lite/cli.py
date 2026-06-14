@@ -60,14 +60,18 @@ def _cmd_mask(args: argparse.Namespace) -> int:
         print(f"error: invalid prompt file: {exc}", file=sys.stderr)
         return 1
 
-    config = RunConfig(
-        backend=args.backend,
-        level=args.level,
-        axes=[a.strip() for a in args.axes.split(",") if a.strip()],
-        direction=args.direction,
-        combine_rule=args.combine,
-        overwrite=args.overwrite,
-    )
+    try:
+        config = RunConfig(
+            backend=args.backend,
+            level=args.level,
+            axes=[a.strip() for a in args.axes.split(",") if a.strip()],
+            direction=args.direction,
+            combine_rule=args.combine,
+            overwrite=args.overwrite,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     progress = (
         (lambda m: print(f"[organ-masker-lite] {m}", file=sys.stderr)) if args.verbose else None
     )

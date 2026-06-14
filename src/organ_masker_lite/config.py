@@ -40,6 +40,14 @@ class RunConfig:
     allow_download: bool = True
     overwrite: bool = False
 
+    def __post_init__(self) -> None:
+        # ``level`` is either the COARSEST sentinel or a concrete non-negative index (FR-003).
+        if self.level != COARSEST_LEVEL and self.level < 0:
+            raise ValueError(
+                f"invalid level {self.level}; use a non-negative index or "
+                f"{COARSEST_LEVEL} for the coarsest (default) level"
+            )
+
     def resolved_model_dir(self) -> Path:
         """Resolve the model directory: explicit > env var > default (cwd subdir) (FR-019)."""
         if self.model_dir is not None:
