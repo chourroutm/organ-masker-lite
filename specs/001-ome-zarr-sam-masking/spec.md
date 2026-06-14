@@ -31,6 +31,8 @@ Functionality is built up incrementally, with each user story below a self-conta
 - Q: How should the tool obtain model weights when missing from the model directory? → A: Auto-download missing weights into the model directory by default, with an opt-out flag (clear error when disabled/offline and weights are missing).
 - Q: Where should the default local model directory live (overridable)? → A: A subdirectory of the current working directory, overridable via an explicit option/environment variable.
 - Q: Default rule for combining per-sweep masks into the consensus mask? → A: Per-voxel majority vote.
+- Q: Output cardinality — single binary mask or multi-object label map? → A: Single binary foreground mask (0/1), one target structure per run; segmenting multiple distinct objects in one run is out of scope (use separate runs).
+- Q: How do prompts placed on one plane drive multi-axis sweeps? → A: Seed from the prompted axis — propagate the prompted axis first to a 3D mask, then automatically derive per-slice seeds for the other axes' sweeps.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -76,10 +78,14 @@ robustness over the P1 single-axis pass, but it is an enhancement of an already-
 axis forward-only pass with identical prompts, and confirm the multi-axis consensus mask has
 equal or greater agreement with the reference segmentation than the single-axis result.
 
+The user places landmarks on a single plane; the prompted axis is swept first, and the other
+selected axes are seeded automatically from that 3D result rather than requiring new prompts.
+
 **Acceptance Scenarios**:
 
-1. **Given** a chosen set of axes to sweep, **When** masking runs, **Then** each selected axis is
-   swept independently and the outputs are merged by the configured combination rule into one mask.
+1. **Given** a chosen set of axes to sweep, **When** masking runs, **Then** the prompted axis is
+   swept first, the other selected axes are seeded from its 3D mask and swept, and all per-sweep
+   outputs are merged by the configured combination rule into one mask.
 2. **Given** forward-and-reverse mode, **When** masking runs along an axis, **Then** the structure
    is propagated in both directions from the landmark slices and the two directions are merged.
 3. **Given** no combination rule is specified, **When** multiple sweeps run, **Then** a documented
@@ -191,8 +197,11 @@ mask.
   level, or that are expressed at a different level than the run level?
 - What happens when the target structure is absent from a slice during propagation (the structure
   ends partway through the volume)?
-- How does the system behave when the selected level does not fit in available memory? It must
-  fail clearly or process in chunks rather than crash unpredictably.
+- What happens when the prompted-axis sweep yields no foreground to seed the other axes? The run
+  reports an empty/failed segmentation clearly rather than silently producing an empty mask.
+- How does the system behave when the selected level, or the intermediate frame/vote stores, do not
+  fit in available memory or disk? The run must fail with a clear, actionable error (a preflight
+  size/disk check) rather than crash unpredictably.
 - How are anisotropic voxels (different physical spacing per axis) handled when combining sweeps
   from different axes?
 - What happens when sweeps from different axes disagree strongly on a region (combination rule
@@ -255,6 +264,13 @@ mask.
   download them into that directory by default, and MUST provide an opt-out that disables
   downloading; when downloading is disabled or unavailable (e.g., offline) and the weights are
   missing, the system MUST fail with a clear, actionable message.
+- **FR-021**: System MUST produce a single binary foreground mask (values 0/1) for one target
+  structure per run. Segmenting multiple distinct objects in a single run is out of scope; multiple
+  structures are obtained via separate runs.
+- **FR-022**: For multi-axis sweeps, the System MUST seed the non-prompted axes automatically from
+  the 3D mask produced by the prompted axis: it propagates the prompted axis first, then derives
+  per-slice seeds for each other selected axis from that result (the user places landmarks on a
+  single plane only).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -265,11 +281,13 @@ mask.
 - **Landmark Prompt**: A point with an inside/outside label, or an optional bounding box, expressed
   in the coordinate space of the selected level; the guidance given to the segmentation backend.
 - **Sweep**: One traversal of the volume as ordered slices along a chosen axis in a chosen
-  direction; produces a per-sweep mask candidate.
-- **Consensus Mask**: The single mask formed by combining the per-sweep candidates by the
-  combination rule.
-- **Output Mask**: An OME-Zarr v0.5 store representing the final (optionally post-processed) mask
-  aligned to the selected input level.
+  direction; produces a per-sweep mask candidate. The prompted (primary) sweep uses the user's
+  landmarks; seeded sweeps along other axes derive their per-slice seeds from the prompted axis's
+  3D result.
+- **Consensus Mask**: The single binary foreground mask formed by combining the per-sweep
+  candidates by the combination rule.
+- **Output Mask**: An OME-Zarr v0.5 store representing the final (optionally post-processed) single
+  binary foreground mask (0/1) aligned to the selected input level.
 - **Run Configuration**: The full set of parameters for a run (selected backend, level, axes,
   propagation mode, combination rule, post-processing settings, prompts) recorded for
   reproducibility.
@@ -338,6 +356,11 @@ mask.
   principle; this spec asserts only relative outcomes (SC-006).
 - The package is built incrementally following the prioritized user stories, with US1 as the
   initial shippable increment.
+- Each run targets a single structure and produces a single binary foreground mask; multi-object
+  (multi-label) segmentation is out of scope for this feature (object identifiers, if present, are
+  an internal single-object detail).
+- In multi-axis runs the user places landmarks on one plane only; the non-prompted axes are seeded
+  automatically from the prompted axis's 3D result rather than requiring per-axis prompts.
 
 ## Dependencies
 

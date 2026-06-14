@@ -9,6 +9,8 @@
 organ-masker-lite masks a 3D structure in a large OME-Zarr v0.5 volume by sweeping the volume as
 stacks of 2D slices and using a SAM-family video predictor to propagate a segmentation from a few
 landmark slices through each sweep, then combining the per-sweep results into one consensus mask.
+Each run targets one structure and emits a single binary mask (FR-021); in multi-axis runs the
+prompted axis is swept first and the other axes are seeded from its 3D result (FR-022).
 The technical approach: a small pure-Python core (NumPy + Zarr v3 + ome-zarr-models) with the heavy
 segmentation backends (SAM2, SAM3, PyTorch) and the interactive viewer (napari) as optional install
 extras. Slices are normalized to uint8 RGB "video frames" stored in an on-disk NumPy memmap

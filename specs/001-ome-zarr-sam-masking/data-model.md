@@ -40,7 +40,7 @@ A landmark on a specific slice/frame. Mirrors the SAM2 prompt-encoder convention
 | `point_coords` | ndarray `(N,2)` float | `(x, y)` in the slice's pixel space |
 | `point_labels` | ndarray `(N,)` int | `1`=positive/include, `0`=negative/exclude |
 | `box` | ndarray `(4,)` float or None | `[x_min, y_min, x_max, y_max]` |
-| `obj_id` | int | Object identifier (default single object) |
+| `obj_id` | int | Internal single-object identifier; multi-object segmentation is out of scope (FR-021) |
 
 Validation rules:
 - `point_coords` length MUST equal `point_labels` length.
@@ -65,13 +65,13 @@ The complete, reproducible parameterization of a run (FR-014).
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
 | `backend` | enum {`sam2`,`sam3`} | `sam2` | First-class backends (FR-018) |
-| `level` | int | documented default (coarse) | Selected binning level (FR-003) |
+| `level` | int | coarsest level (highest index) | Selected binning level (FR-003) |
 | `axes` | list[axis] | single axis (P1) | One or more sweep axes (FR-007) |
 | `direction` | enum {`forward`,`forward_reverse`} | `forward` | Propagation mode (FR-006) |
 | `combine_rule` | enum {`majority`,`union`,`intersection`} | `majority` | Consensus rule (FR-007) |
 | `postprocess` | PostProcessConfig | see below | Optional cleanup (FR-012) |
 | `model_dir` | path | `./organ_masker_models` | Override via option/env (FR-019) |
-| `allow_download` | bool | `true` | `--no-download` sets false (FR-020) |
+| `allow_download` | bool | `true` | `--no-download` sets false (FR-020); download is performed by an injectable fetcher so the path is unit-testable without network |
 | `overwrite` | bool | `false` | Guards existing output (FR-013) |
 
 Validation rules:
@@ -94,10 +94,16 @@ One traversal of the volume as ordered slices along one axis in one direction.
 |-------|------|-------|
 | `axis` | axis | Sweep axis |
 | `direction` | enum | forward / reverse |
+| `seed_source` | enum {`prompts`,`seeded`} | `prompts` for the prompted axis; `seeded` for other axes (FR-022) |
 | `frame_store` | memmap ref | uint8 RGB frames for this sweep (research R3) |
 | `result` | per-voxel binary contribution | Folded into the vote accumulator, not retained |
 
+The prompted axis is swept first using the user's prompts; sweeps along the other selected axes are
+seeded automatically from the prompted axis's 3D result rather than from new user prompts (FR-022).
+
 ## ConsensusMask (runtime, transient)
+
+A single binary foreground mask for one target structure per run (FR-021).
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -113,7 +119,7 @@ The written OME-Zarr v0.5 result.
 |-------|------|-------|
 | `store_path` | path | Destination store |
 | `levels` | list[LevelInfo] | **Same count as input**; shapes/transforms copied from input (research R5) |
-| `dtype` | integer label | Nearest-neighbor resampled across levels |
+| `dtype` | binary `uint8` (0/1) | Single foreground mask, one structure per run (FR-021); nearest-neighbor resampled across levels |
 | `run_record` | mapping | Serialized RunConfig + PromptSet for reproducibility (FR-014) |
 
 Validation rules:
@@ -128,3 +134,5 @@ Validation rules:
 - `RunConfig` references one `backend`; the backend resolves weights from `model_dir`.
 - A run produces 1..* `Sweep` (axes x directions) folding into one `ConsensusMask`, which (after
   optional `PostProcessConfig`) becomes one `OutputMask` whose levels mirror the input.
+- The prompted axis is swept first from the user's prompts; other selected axes are seeded from its
+  3D result (FR-022). Each run yields a single binary foreground mask (FR-021).

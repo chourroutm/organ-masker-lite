@@ -109,6 +109,10 @@ mask must register against the input (SC-002), so copying the input's level geom
 faithful approach. Nearest-neighbor is the correct resampling for categorical masks (no
 interpolation across label boundaries).
 
+**Default level**: when `--level` is omitted, use the coarsest level (highest index). It gives the
+fastest first result, matches the "coarse level for a fast preview" intent, and makes the
+coarser-is-faster outcome (SC-006) easy to demonstrate.
+
 **Alternatives considered**:
 - Single-level output: violates the explicit "same levels as input" requirement.
 - Linear/area downsampling: produces fractional values meaningless for labels; rejected.

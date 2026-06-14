@@ -21,7 +21,7 @@ organ-masker-lite mask INPUT OUTPUT --prompts PROMPTS [options]
 | `OUTPUT` | yes | - | Path to output OME-Zarr v0.5 store |
 | `--prompts PATH` | yes | - | Prompt file (points/labels/box) |
 | `--backend {sam2,sam3}` | no | `sam2` | Segmentation backend (FR-018) |
-| `--level INT` | no | documented default | Multiscale level to run on (FR-003) |
+| `--level INT` | no | coarsest level (highest index) | Multiscale level to run on (FR-003) |
 | `--axes AXES` | no | single axis | Comma-separated sweep axes, e.g. `z` or `z,y,x` (FR-007) |
 | `--direction {forward,forward_reverse}` | no | `forward` | Propagation mode (FR-006) |
 | `--combine {majority,union,intersection}` | no | `majority` | Consensus rule (FR-007) |
