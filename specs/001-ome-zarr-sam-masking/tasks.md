@@ -163,13 +163,13 @@ inputs/prompts; argument names/shapes match SAM2.
 
 ### Tests for User Story 4 (write FIRST)
 
-- [ ] T046 [US4] API contract test: signatures and behaviors C-API-1..9 (single point/box/exclusion, SAM-arg naming, validation errors) per `contracts/python-api.md` in `tests/contract/test_python_api.py`
-- [ ] T047 [US4] Integration test: API and CLI produce equivalent masks for identical inputs/prompts, in `tests/integration/test_api_cli_parity.py`
+- [X] T046 [US4] API contract test: signatures and behaviors C-API-1..9 (single point/box/exclusion, SAM-arg naming, validation errors) per `contracts/python-api.md` in `tests/contract/test_python_api.py`
+- [X] T047 [US4] Integration test: API and CLI produce equivalent masks for identical inputs/prompts, in `tests/integration/test_api_cli_parity.py`
 
 ### Implementation for User Story 4
 
-- [ ] T048 [US4] Implement `OrganMaskPredictor` and `MaskResult` facade over the shared engine in `src/organ_masker_lite/api.py`
-- [ ] T049 [US4] Export public API (`OrganMaskPredictor`, config types) from `src/organ_masker_lite/__init__.py`
+- [X] T048 [US4] Implement `OrganMaskPredictor` and `MaskResult` facade over the shared engine in `src/organ_masker_lite/api.py`
+- [X] T049 [US4] Export public API (`OrganMaskPredictor`, config types) from `src/organ_masker_lite/__init__.py`
 
 **Checkpoint**: SAM-like programmatic API at parity with the CLI.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -47,20 +48,29 @@ def preflight_disk(required_bytes: int, path: str | Path) -> None:
         )
 
 
-def run_masking(
+@dataclass
+class MaskComputation:
+    """The result of computing a consensus mask, plus everything needed to write it (FR-014)."""
+
+    consensus: np.ndarray
+    level: int
+    reader: OmeZarrReader
+    record: dict
+
+
+def compute_mask(
     input_path: str | Path,
-    output_path: str | Path,
     prompts: PromptSet,
     config: RunConfig,
     *,
     reader: OmeZarrReader | None = None,
     backend: VideoSegmenterBackend | None = None,
     progress: Callable[[str], None] | None = None,
-) -> Path:
-    """Run an end-to-end masking pipeline and write an OME-Zarr v0.5 mask.
+) -> MaskComputation:
+    """Validate, sweep, and combine into a consensus mask (no output written).
 
-    ``reader``/``backend`` may be injected (tests); otherwise they are constructed from
-    ``input_path`` and ``config``.
+    Shared by the CLI (``run_masking``) and the programmatic API so both produce identical masks
+    and run records for identical inputs/prompts (SC-005). ``reader``/``backend`` may be injected.
     """
 
     def report(msg: str) -> None:
@@ -134,19 +144,50 @@ def run_masking(
 
         consensus = accumulator.result(config.combine_rule)
 
-        record = {
-            "input": str(input_path),
-            "level": level,
-            "config": config.to_record(),
-            "prompts": prompts.to_record(),
-        }
-        report("writing output")
-        write_mask(output_path, consensus, level, reader, record, overwrite=config.overwrite)
+    record = {
+        "input": str(input_path),
+        "level": level,
+        "config": config.to_record(),
+        "prompts": prompts.to_record(),
+    }
+    return MaskComputation(consensus=consensus, level=level, reader=reader, record=record)
+
+
+def run_masking(
+    input_path: str | Path,
+    output_path: str | Path,
+    prompts: PromptSet,
+    config: RunConfig,
+    *,
+    reader: OmeZarrReader | None = None,
+    backend: VideoSegmenterBackend | None = None,
+    progress: Callable[[str], None] | None = None,
+) -> Path:
+    """Run an end-to-end masking pipeline and write an OME-Zarr v0.5 mask.
+
+    ``reader``/``backend`` may be injected (tests); otherwise they are constructed from
+    ``input_path`` and ``config``.
+    """
+    comp = compute_mask(
+        input_path, prompts, config, reader=reader, backend=backend, progress=progress
+    )
+    if progress is not None:
+        progress("writing output")
+    write_mask(
+        output_path,
+        comp.consensus,
+        comp.level,
+        comp.reader,
+        comp.record,
+        overwrite=config.overwrite,
+    )
     return Path(output_path)
 
 
 __all__ = [
     "run_masking",
+    "compute_mask",
+    "MaskComputation",
     "PipelineError",
     "estimate_intermediate_bytes",
     "preflight_disk",

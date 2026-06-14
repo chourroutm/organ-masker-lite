@@ -1,0 +1,105 @@
+"""Python API contract tests for OrganMaskPredictor (T046, contracts/python-api.md C-API-1..9).
+
+Exercised with the registered ``stub`` backend so the SAM-like facade is fully covered without
+torch/GPU/weights.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import inspect
+
+import numpy as np
+import pytest
+
+from organ_masker_lite import OrganMaskPredictor
+from organ_masker_lite.io.reader import OmeZarrReader
+from organ_masker_lite.io.validate import validate_ome_zarr
+from organ_masker_lite.prompts.model import PromptError
+
+
+def _predictor(store, level=0):
+    return OrganMaskPredictor(backend="stub").set_volume(store, level=level)
+
+
+def test_c_api_1_single_point_includes_point(single_blob_zarr):
+    store, (cx, cy), frame = single_blob_zarr
+    p = _predictor(store)
+    p.add_points(frame_index=frame, point_coords=[[cx, cy]], point_labels=[1])
+    result = p.predict(axes=["z"])
+    assert result.array.any()
+    assert result.array[frame, int(cy), int(cx)] == 1
+
+
+def test_c_api_2_box_foreground_within_box(single_blob_zarr):
+    store, _center, frame = single_blob_zarr
+    box = [4.0, 4.0, 12.0, 12.0]
+    p = _predictor(store)
+    p.add_box(frame_index=frame, box=box)
+    result = p.predict(axes=["z"])
+    assert result.array.any()
+    _z, ys, xs = np.nonzero(result.array)
+    x0, y0, x1, y1 = box
+    assert (xs >= x0).all() and (xs < x1).all()
+    assert (ys >= y0).all() and (ys < y1).all()
+
+
+def test_c_api_3_negative_point_excludes_region(two_blob_zarr):
+    store, (ax, ay), (bx, by), frame = two_blob_zarr
+    p = _predictor(store)
+    p.add_points(
+        frame_index=frame,
+        point_coords=[[ax, ay], [bx, by], [bx, by]],
+        point_labels=[1, 1, 0],
+    )
+    result = p.predict(axes=["z"])
+    assert result.array[frame, int(ay), int(ax)] == 1
+    assert result.array[frame, int(by), int(bx)] == 0
+
+
+def test_c_api_4_no_positive_prompt_raises(single_blob_zarr):
+    store, _center, _frame = single_blob_zarr
+    p = _predictor(store)
+    with pytest.raises(PromptError):
+        p.predict(axes=["z"])
+
+
+def test_c_api_5_out_of_bounds_raises(single_blob_zarr):
+    store, _center, frame = single_blob_zarr
+    p = _predictor(store)
+    p.add_points(frame_index=frame, point_coords=[[999, 999]], point_labels=[1])
+    with pytest.raises(PromptError):
+        p.predict(axes=["z"])
+
+
+def test_c_api_8_saved_output_valid_same_levels(single_blob_zarr, tmp_path):
+    store, (cx, cy), frame = single_blob_zarr
+    p = _predictor(store)
+    p.add_points(frame_index=frame, point_coords=[[cx, cy]], point_labels=[1])
+    out = p.predict(axes=["z"]).save(tmp_path / "api_out.ome.zarr")
+
+    validate_ome_zarr(out)  # valid OME-Zarr v0.5
+    assert OmeZarrReader(out).n_levels == OmeZarrReader(store).n_levels
+
+
+def test_c_api_9_argument_names_and_shapes_match_sam2():
+    points_params = list(inspect.signature(OrganMaskPredictor.add_points).parameters)
+    box_params = list(inspect.signature(OrganMaskPredictor.add_box).parameters)
+    # SAM2-style prompt arguments
+    assert points_params == ["self", "frame_index", "point_coords", "point_labels", "obj_id"]
+    assert box_params == ["self", "frame_index", "box", "obj_id"]
+
+
+_HAVE_SAM3 = (
+    importlib.util.find_spec("torch") is not None and importlib.util.find_spec("sam3") is not None
+)
+
+
+@pytest.mark.real_backend
+@pytest.mark.skipif(not _HAVE_SAM3, reason="torch/sam3 not installed")
+def test_c_api_7_sam3_backend_runs_same_flow(single_blob_zarr, tmp_path):
+    store, (cx, cy), frame = single_blob_zarr
+    p = OrganMaskPredictor(backend="sam3").set_volume(store, level=0)
+    p.add_points(frame_index=frame, point_coords=[[cx, cy]], point_labels=[1])
+    result = p.predict(axes=["z"])
+    assert result.array.shape == OmeZarrReader(store).level_shape(0)
