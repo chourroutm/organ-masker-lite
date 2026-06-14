@@ -1,30 +1,33 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (template, unversioned) -> 1.0.0
-Bump rationale: Initial ratification. Template placeholders replaced with concrete
-governing principles, so this is the first stable MAJOR version.
+Version change: 1.0.0 -> 1.1.0
+Bump rationale: Added a new core principle (Performance Requirements) and an associated
+quality gate. New principle/materially expanded guidance => MINOR bump.
 
 Modified principles:
-  - [PRINCIPLE_1_NAME] -> I. Code Quality Standards
-  - [PRINCIPLE_2_NAME] -> II. Test Discipline (NON-NEGOTIABLE)
-  - [PRINCIPLE_3_NAME] -> III. Disciplined Version Control
-  - [PRINCIPLE_4_NAME] -> (removed; folded into the three principles above)
-  - [PRINCIPLE_5_NAME] -> (removed; folded into the three principles above)
+  - (added) IV. Performance Requirements
 
 Added sections:
-  - Quality Gates (replaces [SECTION_2_NAME])
-  - Development Workflow (replaces [SECTION_3_NAME])
+  - Core Principles: IV. Performance Requirements
+  - Quality Gates: performance-target gate added
 
-Removed sections: none (template slots repurposed)
+Removed sections: none
 
 Templates requiring updates:
-  - .specify/templates/plan-template.md          OK (Constitution Check gate is generic)
+  - .specify/templates/plan-template.md          OK (Technical Context already has
+                                                 Performance Goals/Constraints fields;
+                                                 Constitution Check gate is generic)
   - .specify/templates/spec-template.md          OK (no mandatory sections changed)
-  - .specify/templates/tasks-template.md         OK (already includes test + per-task commit guidance)
+  - .specify/templates/tasks-template.md         OK (Polish phase already covers perf work)
   - .specify/templates/commands/*.md             N/A (directory not present)
 
 Follow-up TODOs: none
+
+----- prior amendments -----
+1.0.0 (2026-06-14): Initial ratification. Template placeholders replaced with concrete
+governing principles (I. Code Quality Standards, II. Test Discipline, III. Disciplined
+Version Control) plus Quality Gates, Development Workflow, and Governance sections.
 -->
 # OrganMasker Lite Constitution
 
@@ -74,6 +77,21 @@ Work MUST be recorded as small, coherent git commits with meaningful history.
 Rationale: A clean, atomic history makes changes reviewable, reversible, and debuggable.
 Good commits are the most durable documentation of why the code is the way it is.
 
+### IV. Performance Requirements
+
+Performance MUST be a defined, measured property of every feature, not an afterthought.
+
+- Each feature MUST declare explicit, measurable performance targets (latency, throughput,
+  memory, and any domain-specific budgets) in the plan's Technical Context before implementation.
+- Performance-sensitive paths MUST be validated with benchmarks or profiling data; optimization
+  and "fast enough" claims MUST be backed by measurements, not assumptions.
+- Changes MUST NOT regress an established performance budget. A measured regression MUST be
+  fixed, or explicitly justified and recorded in the plan's Complexity Tracking before merge.
+- Resource usage MUST stay within the declared constraints for the target platform and inputs.
+
+Rationale: Performance is a correctness concern for this tool's intended workloads. Stating
+budgets up front and measuring against them keeps regressions visible and decisions evidence-based.
+
 ## Quality Gates
 
 The following gates MUST be satisfied before a change is merged:
@@ -82,6 +100,8 @@ The following gates MUST be satisfied before a change is merged:
 - The full automated test suite passes locally.
 - New or changed behavior is covered by tests (Principle II).
 - The change is captured in atomic, well-described commits (Principle III).
+- Declared performance targets are met and no established performance budget is regressed
+  without recorded justification (Principle IV).
 
 A change that cannot meet a gate MUST either be revised to comply or have an explicit, recorded
 justification in the plan's Complexity Tracking section before proceeding.
@@ -92,7 +112,7 @@ justification in the plan's Complexity Tracking section before proceeding.
   re-evaluated against these principles before Phase 0 and after Phase 1 design.
 - Implement in the order: write failing tests, make them pass, refactor, then commit.
 - Commit after each task or logical group of changes, keeping each commit green.
-- Reviews (peer or self) MUST verify compliance with all three core principles; unjustified
+- Reviews (peer or self) MUST verify compliance with all four core principles; unjustified
   violations block merge.
 
 ## Governance
@@ -108,4 +128,4 @@ This Constitution supersedes conflicting practices for this project.
   justified in writing (Complexity Tracking) or remediated before merge.
 - For runtime, technology, and structure guidance, refer to the active plan and CLAUDE.md.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-14 | **Last Amended**: 2026-06-14
+**Version**: 1.1.0 | **Ratified**: 2026-06-14 | **Last Amended**: 2026-06-14
