@@ -9,8 +9,29 @@ from pathlib import Path
 DEFAULT_MODEL_DIR = "organ_masker_models"
 MODEL_DIR_ENV = "ORGAN_MASKER_MODEL_DIR"
 
+DEFAULT_LOG_DIR = "organ_masker_logs"
+LOG_DIR_ENV = "ORGAN_MASKER_LOG_DIR"
+
 #: Sentinel meaning "use the coarsest level (highest index)".
 COARSEST_LEVEL = -1
+
+
+@dataclass
+class LogConfig:
+    """Configuration for per-invocation input logging (feature 002, FR-007)."""
+
+    log_dir: Path | None = None
+    level: str = "INFO"
+    enabled: bool = True
+
+    def resolved_log_dir(self) -> Path:
+        """Resolve the log directory: explicit > env var > default (cwd subdir) (FR-007)."""
+        if self.log_dir is not None:
+            return Path(self.log_dir)
+        env = os.environ.get(LOG_DIR_ENV)
+        if env:
+            return Path(env)
+        return Path.cwd() / DEFAULT_LOG_DIR
 
 
 @dataclass

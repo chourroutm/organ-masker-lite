@@ -67,6 +67,7 @@ def compute_mask(
     reader: OmeZarrReader | None = None,
     backend: VideoSegmenterBackend | None = None,
     progress: Callable[[str], None] | None = None,
+    run_id: str | None = None,
 ) -> MaskComputation:
     """Validate, sweep, and combine into a consensus mask (no output written).
 
@@ -150,6 +151,7 @@ def compute_mask(
         consensus = postprocess_mask(consensus, config.postprocess)
 
     record = {
+        "run_id": run_id,
         "input": str(input_path),
         "level": level,
         "config": config.to_record(),
@@ -167,14 +169,21 @@ def run_masking(
     reader: OmeZarrReader | None = None,
     backend: VideoSegmenterBackend | None = None,
     progress: Callable[[str], None] | None = None,
+    run_id: str | None = None,
 ) -> Path:
     """Run an end-to-end masking pipeline and write an OME-Zarr v0.5 mask.
 
     ``reader``/``backend`` may be injected (tests); otherwise they are constructed from
-    ``input_path`` and ``config``.
+    ``input_path`` and ``config``. ``run_id`` is embedded in the run record for log correlation.
     """
     comp = compute_mask(
-        input_path, prompts, config, reader=reader, backend=backend, progress=progress
+        input_path,
+        prompts,
+        config,
+        reader=reader,
+        backend=backend,
+        progress=progress,
+        run_id=run_id,
     )
     if progress is not None:
         progress("writing output")

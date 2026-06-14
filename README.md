@@ -66,6 +66,8 @@ Key options:
 | `--fill-holes / --no-fill-holes` | on | Fill interior holes. |
 | `--dilate INT` / `--erode INT` | `0` | Morphology radii (voxels). |
 | `--overwrite` | off | Replace an existing output. |
+| `--log-dir PATH` | `./organ_masker_logs` | Directory for per-invocation input logs. |
+| `--log-level {DEBUG,INFO,WARNING,ERROR}` | `INFO` | Verbosity of ancillary log messages. |
 
 ### Prompt file
 
@@ -84,6 +86,19 @@ Key options:
 `label` is `1` for a positive (include) point and `0` for a negative (exclude) point. At least one
 positive point or a box is required.
 
+### Input logging
+
+Every invocation -- CLI or API -- writes one plain-text log file to `<log-dir>/<run-id>.log`
+capturing the command, parsed options, resolved effective configuration, and the full prompt set.
+The log is written before validation, so runs that fail before producing output are still recorded,
+with an `outcome:` line on exit. The log's `run_id` matches the `run_id` embedded in the output's
+`run_record.json`, correlating each log with its mask.
+
+The default directory is `./organ_masker_logs` (override with `--log-dir` or the
+`ORGAN_MASKER_LOG_DIR` environment variable). Logging is best-effort and never touches stdout: if
+the log cannot be written (e.g. an unwritable `--log-dir`), the masking run still completes and a
+single warning is printed to stderr.
+
 ## Python API
 
 The API mirrors the SAM/SAM2 predictor structure:
@@ -100,6 +115,10 @@ mask.save("api_out.ome.zarr")
 
 `add_box(frame_index, box=[x0, y0, x1, y1])` adds a box; both prompt methods may be combined. The
 saved output equals the CLI output for identical inputs/prompts.
+
+`predict(...)` logs the run just like the CLI (with `prompt_source="api"`); pass
+`OrganMaskPredictor(..., log_dir=..., log_level=...)` to control the destination and verbosity, and
+read `mask.run_id` to correlate the result with its log file and saved `run_record.json`.
 
 ## Interactive session
 

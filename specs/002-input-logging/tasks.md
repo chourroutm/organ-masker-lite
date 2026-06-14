@@ -30,8 +30,8 @@ Single Python package, `src/` layout: `src/organ_masker_lite/`, tests in `tests/
 
 **Purpose**: Module placeholder and ignore rules.
 
-- [ ] T001 Create the input-logging module skeleton (deliberately NOT named `logging`, to avoid shadowing the stdlib) in `src/organ_masker_lite/input_log.py`
-- [ ] T002 [P] Add `organ_masker_logs/` to `.gitignore`
+- [X] T001 Create the input-logging module skeleton (deliberately NOT named `logging`, to avoid shadowing the stdlib) in `src/organ_masker_lite/input_log.py`
+- [X] T002 [P] Add `organ_masker_logs/` to `.gitignore`
 
 ---
 
@@ -43,11 +43,11 @@ story builds on.
 **CRITICAL**: Tests (T003-T004) are written before their implementations (T005-T007) and must fail
 first.
 
-- [ ] T003 [P] Unit test: run identifier is unique and time-sortable (`<UTC-timestamp>-<short-uuid>`) in `tests/unit/test_run_id.py`
-- [ ] T004 [P] Unit test: log lifecycle writes a per-invocation file with header + outcome, is best-effort on an unwritable directory (warns to stderr, raises nothing), and writes nothing to stdout, in `tests/unit/test_input_log.py`
-- [ ] T005 [P] Implement run identifier generation in `src/organ_masker_lite/input_log.py`
-- [ ] T006 [P] Implement `LogConfig` (default `./organ_masker_logs`, verbosity level, enabled flag) in `src/organ_masker_lite/config.py`
-- [ ] T007 Implement the per-invocation log lifecycle context manager (create `<log_dir>/<run_id>.log`, write header, append outcome on exit, best-effort wrapping, stderr-only warnings, never stdout) in `src/organ_masker_lite/input_log.py` (depends on T005, T006)
+- [X] T003 [P] Unit test: run identifier is unique and time-sortable (`<UTC-timestamp>-<short-uuid>`) in `tests/unit/test_run_id.py`
+- [X] T004 [P] Unit test: log lifecycle writes a per-invocation file with header + outcome, is best-effort on an unwritable directory (warns to stderr, raises nothing), and writes nothing to stdout, in `tests/unit/test_input_log.py`
+- [X] T005 [P] Implement run identifier generation in `src/organ_masker_lite/input_log.py`
+- [X] T006 [P] Implement `LogConfig` (default `./organ_masker_logs`, verbosity level, enabled flag) in `src/organ_masker_lite/config.py`
+- [X] T007 Implement the per-invocation log lifecycle context manager (create `<log_dir>/<run_id>.log`, write header, append outcome on exit, best-effort wrapping, stderr-only warnings, never stdout) in `src/organ_masker_lite/input_log.py` (depends on T005, T006)
 
 **Checkpoint**: Logging mechanism works in isolation with the stub backend.
 
@@ -63,16 +63,16 @@ a log file capturing the command and config.
 
 ### Tests for User Story 1 (write FIRST, must fail)
 
-- [ ] T008 [US1] Integration test: a successful CLI `mask` run writes `<log-dir>/<run-id>.log` with the command and effective config (C-LOG-CLI-1) in `tests/integration/test_log_cli.py`
-- [ ] T009 [US1] Integration test: a CLI run that fails before output (e.g., bad level) still writes a log file (C-LOG-CLI-2, FR-002) in `tests/integration/test_log_cli_failure.py`
-- [ ] T010 [P] [US1] Integration test: each invocation writes a distinct, non-colliding log file (C-LOG-CLI-3), and the run id in the log equals the run id in the output run-record (C-LOG-CLI-7, FR-005) in `tests/integration/test_log_cli_runid.py`
-- [ ] T011 [P] [US1] Integration test: with logging active, the tool's stdout contains no log lines and any machine-readable stdout stays parseable; logging notices appear on stderr only (C-LOG-CLI-4, FR-008, SC-005) in `tests/integration/test_log_stdout_clean.py`
+- [X] T008 [US1] Integration test: a successful CLI `mask` run writes `<log-dir>/<run-id>.log` with the command and effective config (C-LOG-CLI-1) in `tests/integration/test_log_cli.py`
+- [X] T009 [US1] Integration test: a CLI run that fails before output (e.g., bad level) still writes a log file (C-LOG-CLI-2, FR-002) in `tests/integration/test_log_cli_failure.py`
+- [X] T010 [P] [US1] Integration test: each invocation writes a distinct, non-colliding log file (C-LOG-CLI-3), and the run id in the log equals the run id in the output run-record (C-LOG-CLI-7, FR-005) in `tests/integration/test_log_cli_runid.py`
+- [X] T011 [P] [US1] Integration test: with logging active, the tool's stdout contains no log lines and any machine-readable stdout stays parseable; logging notices appear on stderr only (C-LOG-CLI-4, FR-008, SC-005) in `tests/integration/test_log_stdout_clean.py`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Record the invocation block (command line, parsed arguments, resolved effective configuration) on entry, before validation, in `src/organ_masker_lite/input_log.py`
-- [ ] T013 [US1] Wire the log lifecycle into the CLI entry so every invocation (including failures) is logged, in `src/organ_masker_lite/cli.py`
-- [ ] T014 [US1] Embed the run identifier in feature 001's output run-record for log/output correlation (FR-005) in `src/organ_masker_lite/io/writer.py`
+- [X] T012 [US1] Record the invocation block (command line, parsed arguments, resolved effective configuration) on entry, before validation, in `src/organ_masker_lite/input_log.py`
+- [X] T013 [US1] Wire the log lifecycle into the CLI entry so every invocation (including failures) is logged, in `src/organ_masker_lite/cli.py`
+- [X] T014 [US1] Embed the run identifier in feature 001's output run-record for log/output correlation (FR-005) in `src/organ_masker_lite/io/writer.py`
 
 **Checkpoint**: MVP - all CLI invocations, success or failure, are logged; stdout stays clean.
 
@@ -88,14 +88,14 @@ source; run via the API and confirm equivalent logging.
 
 ### Tests for User Story 2 (write FIRST)
 
-- [ ] T015 [US2] Integration test: CLI prompts are recorded (coordinates, labels, optional box, frame/axis) with the prompt-file source, in `tests/integration/test_log_prompts_cli.py`
-- [ ] T016 [US2] Integration test: API-supplied prompts are logged equivalently with `prompt_source="api"` (C-LOG-API-1) and the run id is exposed on the result (C-LOG-API-3) in `tests/integration/test_log_api.py`
-- [ ] T017 [P] [US2] Unit test: a large prompt set is captured in full with the count in the header (FR-010, C-LOG-API-4) in `tests/unit/test_input_log_prompts.py`
+- [X] T015 [US2] Integration test: CLI prompts are recorded (coordinates, labels, optional box, frame/axis) with the prompt-file source, in `tests/integration/test_log_prompts_cli.py`
+- [X] T016 [US2] Integration test: API-supplied prompts are logged equivalently with `prompt_source="api"` (C-LOG-API-1) and the run id is exposed on the result (C-LOG-API-3) in `tests/integration/test_log_api.py`
+- [X] T017 [P] [US2] Unit test: a large prompt set is captured in full with the count in the header (FR-010, C-LOG-API-4) in `tests/unit/test_input_log_prompts.py`
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Record the prompts block from the `PromptSet` (full content + count + source) in `src/organ_masker_lite/input_log.py`
-- [ ] T019 [US2] Wire the log lifecycle into the API `predict` path (`prompt_source="api"`; expose the run id on the result) in `src/organ_masker_lite/api.py`
+- [X] T018 [US2] Record the prompts block from the `PromptSet` (full content + count + source) in `src/organ_masker_lite/input_log.py`
+- [X] T019 [US2] Wire the log lifecycle into the API `predict` path (`prompt_source="api"`; expose the run id on the result) in `src/organ_masker_lite/api.py`
 
 **Checkpoint**: Prompts recoverable from the log for both CLI and API runs.
 
@@ -111,13 +111,13 @@ verbosity are honored.
 
 ### Tests for User Story 3 (write FIRST)
 
-- [ ] T020 [US3] Integration test: `--log-dir` and `--log-level` override the defaults (C-LOG-CLI-6, FR-007) in `tests/integration/test_log_options.py`
-- [ ] T021 [US3] Integration test: an unwritable `--log-dir` leaves the masking run successful with a single stderr warning (C-LOG-CLI-5, FR-009) in `tests/integration/test_log_besteffort.py`
+- [X] T020 [US3] Integration test: `--log-dir` and `--log-level` override the defaults (C-LOG-CLI-6, FR-007) in `tests/integration/test_log_options.py`
+- [X] T021 [US3] Integration test: an unwritable `--log-dir` leaves the masking run successful with a single stderr warning (C-LOG-CLI-5, FR-009) in `tests/integration/test_log_besteffort.py`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Add `--log-dir` and `--log-level` CLI options (standard logging level names; default `INFO`) and `log_dir`/`log_level` API parameters in `src/organ_masker_lite/cli.py` and `src/organ_masker_lite/api.py`
-- [ ] T023 [US3] Ensure lower verbosity never drops the core invocation/prompt record needed for reproducibility, in `src/organ_masker_lite/input_log.py`
+- [X] T022 [US3] Add `--log-dir` and `--log-level` CLI options (standard logging level names; default `INFO`) and `log_dir`/`log_level` API parameters in `src/organ_masker_lite/cli.py` and `src/organ_masker_lite/api.py`
+- [X] T023 [US3] Ensure lower verbosity never drops the core invocation/prompt record needed for reproducibility, in `src/organ_masker_lite/input_log.py`
 
 **Checkpoint**: Destination and verbosity configurable; logging never corrupts stdout.
 
@@ -125,10 +125,10 @@ verbosity are honored.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T024 [P] Performance test: logging adds < 50 ms per invocation and does not scale with volume size, in `tests/performance/test_log_overhead.py`
-- [ ] T025 [P] Update `README.md`/docs with logging behavior and the `--log-dir`/`--log-level` options
-- [ ] T026 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/input_log.py` and touched files
-- [ ] T027 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
+- [X] T024 [P] Performance test: logging adds < 50 ms per invocation and does not scale with volume size, in `tests/performance/test_log_overhead.py`
+- [X] T025 [P] Update `README.md`/docs with logging behavior and the `--log-dir`/`--log-level` options
+- [X] T026 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/input_log.py` and touched files
+- [X] T027 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
 
 ---
 

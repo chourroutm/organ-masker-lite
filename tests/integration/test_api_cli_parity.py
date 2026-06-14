@@ -46,7 +46,9 @@ def test_api_and_cli_produce_equivalent_masks(single_blob_zarr, tmp_path):
     for i in range(cli_reader.n_levels):
         assert (cli_reader.read_level(i) == api_reader.read_level(i)).all()
 
-    # the embedded run records match too (same config + prompts)
+    # the embedded run records match too (same config + prompts); run_id is per-invocation
+    # and intentionally differs, so it is excluded from the parity comparison (feature 002).
     cli_record = json.loads((cli_out / "run_record.json").read_text())
     api_record = json.loads((api_out / "run_record.json").read_text())
+    assert cli_record.pop("run_id") != api_record.pop("run_id")
     assert cli_record == api_record

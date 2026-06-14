@@ -17,8 +17,9 @@ from pathlib import Path
 
 import numpy as np
 
-from .config import COARSEST_LEVEL, PostProcessConfig, RunConfig
+from .config import COARSEST_LEVEL, LogConfig, PostProcessConfig, RunConfig
 from .engine.pipeline import compute_mask
+from .input_log import log_invocation
 from .io.reader import OmeZarrReader
 from .io.validate import validate_ome_zarr
 from .io.writer import write_mask
@@ -30,6 +31,8 @@ class MaskResult:
 
     def __init__(self, array: np.ndarray, level: int, reader: OmeZarrReader, record: dict):
         self.array = array
+        #: Run identifier correlating this result's log file and saved run-record (FR-005).
+        self.run_id: str | None = record.get("run_id")
         self._level = level
         self._reader = reader
         self._record = record
@@ -52,10 +55,15 @@ class OrganMaskPredictor:
         backend: str = "sam2",
         model_dir: str | Path | None = None,
         allow_download: bool = True,
+        log_dir: str | Path | None = None,
+        log_level: str | None = None,
     ):
         self._backend = backend
         self._model_dir = model_dir
         self._allow_download = allow_download
+        self._log_config = LogConfig(
+            log_dir=log_dir, level=log_level if log_level is not None else "INFO"
+        )
         self._store_path: str | None = None
         self._reader: OmeZarrReader | None = None
         self._level: int = COARSEST_LEVEL
@@ -138,9 +146,13 @@ class OrganMaskPredictor:
             kwargs["axes"] = list(axes)
         config = RunConfig(**kwargs)
 
-        comp = compute_mask(
-            self._store_path, PromptSet(list(self._prompts)), config, reader=self._reader
-        )
+        prompt_set = PromptSet(list(self._prompts))
+        with log_invocation("api", self._log_config) as log:
+            log.record_config(config.to_record())
+            log.record_prompts(prompt_set, source="api")
+            comp = compute_mask(
+                self._store_path, prompt_set, config, reader=self._reader, run_id=log.run_id
+            )
         return MaskResult(comp.consensus, comp.level, comp.reader, comp.record)
 
     def _require_volume(self) -> None:

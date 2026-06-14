@@ -104,6 +104,12 @@ class StubBackendDilate(StubBackend):
         return binary_dilation(base) if base.any() else base
 
 
+@pytest.fixture(autouse=True)
+def isolate_logs(tmp_path, monkeypatch):
+    """Redirect per-invocation input logs (feature 002) to a temp dir, never the repo cwd."""
+    monkeypatch.setenv("ORGAN_MASKER_LOG_DIR", str(tmp_path / "_logs"))
+
+
 @pytest.fixture
 def stub_backend():
     return StubBackend()
