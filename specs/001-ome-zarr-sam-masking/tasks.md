@@ -102,9 +102,9 @@ confirm a valid OME-Zarr v0.5 mask with the same level count as the input, no in
 **Purpose**: Add the second first-class backend (FR-018) and like-for-like comparison (SC-010). No
 story label (not a numbered user story).
 
-- [ ] T035 Integration test: identical input/prompts via `--backend sam2` and `--backend sam3` both produce valid masks (comparison harness), in `tests/integration/test_backend_comparison.py`
-- [ ] T036 [P] Implement SAM3 backend adapter behind the `VideoSegmenterBackend` protocol in `src/organ_masker_lite/backends/sam3.py`
-- [ ] T037 Register `sam3` in the backend registry and verify `--backend` selection end-to-end in `src/organ_masker_lite/backends/registry.py`
+- [X] T035 Integration test: identical input/prompts via `--backend sam2` and `--backend sam3` both produce valid masks (comparison harness), in `tests/integration/test_backend_comparison.py`
+- [X] T036 [P] Implement SAM3 backend adapter behind the `VideoSegmenterBackend` protocol in `src/organ_masker_lite/backends/sam3.py`
+- [X] T037 Register `sam3` in the backend registry and verify `--backend` selection end-to-end in `src/organ_masker_lite/backends/registry.py`
 
 **Checkpoint**: Both backends selectable and comparable.
 

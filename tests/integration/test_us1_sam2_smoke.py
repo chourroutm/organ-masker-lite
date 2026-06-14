@@ -31,7 +31,7 @@ def test_sam2_backend_end_to_end(single_blob_zarr, tmp_path):
     cfg = RunConfig(backend="sam2", axes=["z"], level=0)
 
     try:
-        backend = get_backend("sam2", {})
+        backend = get_backend("sam2")
     except ImportError as exc:  # weights/runtime missing despite importable packages
         pytest.skip(f"sam2 backend unavailable: {exc}")
 

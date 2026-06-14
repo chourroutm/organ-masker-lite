@@ -37,5 +37,12 @@ def _make_sam2(options: dict) -> VideoSegmenterBackend:
     return Sam2Backend(**options)
 
 
+def _make_sam3(options: dict) -> VideoSegmenterBackend:
+    from .sam3 import Sam3Backend
+
+    return Sam3Backend(**options)
+
+
+# SAM2 (default) and SAM3 are first-class, interchangeable backends (FR-018, SC-010).
 register_backend("sam2", _make_sam2)
-# NOTE: "sam3" is registered in its own phase (tasks T036/T037); not part of the US1 MVP.
+register_backend("sam3", _make_sam3)

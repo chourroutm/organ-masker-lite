@@ -10,7 +10,7 @@ import zarr
 from ome_zarr_models.v05.axes import Axis
 from ome_zarr_models.v05.image import Image
 from pydantic_zarr.v3 import ArraySpec
-from scipy.ndimage import label
+from scipy.ndimage import binary_dilation, label
 
 from organ_masker_lite.backends.registry import register_backend
 from organ_masker_lite.prompts.model import PromptSet
@@ -90,10 +90,25 @@ class StubBackend:
         return mask
 
 
+class StubBackendDilate(StubBackend):
+    """A second deterministic backend: the stub result dilated by one voxel.
+
+    Used to exercise the SAM2-vs-SAM3 comparison harness with two distinct, selectable backends
+    that produce overlapping-but-different masks, without torch/GPU/weights.
+    """
+
+    name = "stub_dilate"
+
+    def segment_video(self, frames: np.ndarray, prompts: PromptSet) -> np.ndarray:
+        base = super().segment_video(frames, prompts)
+        return binary_dilation(base) if base.any() else base
+
+
 @pytest.fixture
 def stub_backend():
     return StubBackend()
 
 
-# Register the stub so CLI/integration tests can select it via --backend stub.
+# Register the stubs so CLI/integration tests can select them via --backend.
 register_backend("stub", lambda options: StubBackend())
+register_backend("stub_dilate", lambda options: StubBackendDilate())
