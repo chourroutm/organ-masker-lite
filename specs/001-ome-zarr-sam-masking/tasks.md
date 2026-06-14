@@ -119,14 +119,14 @@ the synthetic volume with identical prompts.
 
 ### Tests for User Story 2 (write FIRST)
 
-- [ ] T038 [US2] Integration test: multi-axis majority consensus agreement >= single-axis result, with prompts placed on a single plane seeding the other axes' sweeps (FR-022), in `tests/integration/test_us2_multiaxis.py`
-- [ ] T039 [US2] Integration test: forward-and-reverse propagation merges both directions, in `tests/integration/test_us2_bidirectional.py`
+- [X] T038 [US2] Integration test: multi-axis majority consensus agreement >= single-axis result, with prompts placed on a single plane seeding the other axes' sweeps (FR-022), in `tests/integration/test_us2_multiaxis.py`
+- [X] T039 [US2] Integration test: forward-and-reverse propagation merges both directions, in `tests/integration/test_us2_bidirectional.py`
 
 ### Implementation for User Story 2
 
-- [ ] T040 [US2] Extend `src/organ_masker_lite/engine/sweep.py` with reverse propagation
-- [ ] T041 [US2] Extend `src/organ_masker_lite/engine/pipeline.py` to sweep the prompted axis first, seed the non-prompted axes from its 3D mask (FR-022), then iterate axes x directions into the vote accumulator
-- [ ] T042 [US2] Wire `--axes` and `--direction` options in `src/organ_masker_lite/cli.py`
+- [X] T040 [US2] Extend `src/organ_masker_lite/engine/sweep.py` with reverse propagation
+- [X] T041 [US2] Extend `src/organ_masker_lite/engine/pipeline.py` to sweep the prompted axis first, seed the non-prompted axes from its 3D mask (FR-022), then iterate axes x directions into the vote accumulator
+- [X] T042 [US2] Wire `--axes` and `--direction` options in `src/organ_masker_lite/cli.py`
 
 **Checkpoint**: Multi-axis, bidirectional consensus masking available.
 

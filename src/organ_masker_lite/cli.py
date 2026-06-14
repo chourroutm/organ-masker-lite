@@ -24,7 +24,17 @@ def _build_parser() -> argparse.ArgumentParser:
         default=COARSEST_LEVEL,
         help="Multiscale level to run on (default: coarsest)",
     )
-    mask.add_argument("--axes", default="z", help="Comma-separated sweep axes (default: z)")
+    mask.add_argument(
+        "--axes",
+        default="z",
+        help="Comma-separated sweep axes; the first is the prompted axis (default: z)",
+    )
+    mask.add_argument(
+        "--direction",
+        default="forward",
+        choices=("forward", "forward_reverse"),
+        help="Propagation mode (default: forward)",
+    )
     mask.add_argument(
         "--combine",
         default="majority",
@@ -54,6 +64,7 @@ def _cmd_mask(args: argparse.Namespace) -> int:
         backend=args.backend,
         level=args.level,
         axes=[a.strip() for a in args.axes.split(",") if a.strip()],
+        direction=args.direction,
         combine_rule=args.combine,
         overwrite=args.overwrite,
     )

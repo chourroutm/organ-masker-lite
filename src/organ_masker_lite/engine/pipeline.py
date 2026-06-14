@@ -17,7 +17,7 @@ from ..io.validate import validate_ome_zarr
 from ..io.writer import write_mask
 from ..prompts.model import PromptSet
 from .combine import VoteAccumulator
-from .sweep import run_sweep
+from .sweep import run_sweep, seeds_from_mask
 
 
 class PipelineError(RuntimeError):
@@ -28,6 +28,13 @@ def estimate_intermediate_bytes(level_shape: tuple[int, ...]) -> int:
     """Estimate intermediate on-disk bytes: RGB frame stack + uint16 vote accumulator."""
     voxels = int(np.prod(level_shape))
     return voxels * 3 + voxels * 2
+
+
+def _axis_dir(workdir: str | Path, axis_name: str) -> Path:
+    """A per-axis working subdirectory so concurrent frame stacks do not collide."""
+    path = Path(workdir) / f"axis_{axis_name}"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def preflight_disk(required_bytes: int, path: str | Path) -> None:
@@ -66,13 +73,17 @@ def run_masking(
     reader = reader or OmeZarrReader(input_path)
     level = reader.resolve_level(config.level)
 
-    axis_name = config.axes[0]
-    if axis_name not in reader.axes:
-        raise PipelineError(f"axis '{axis_name}' not in input axes {reader.axes}")
-    axis_index = reader.axes.index(axis_name)
+    if not config.axes:
+        raise PipelineError("at least one sweep axis is required")
+    for axis_name in config.axes:
+        if axis_name not in reader.axes:
+            raise PipelineError(f"axis '{axis_name}' not in input axes {reader.axes}")
+    prompted_axis = config.axes[0]
+    prompted_index = reader.axes.index(prompted_axis)
     level_shape = reader.level_shape(level)
 
-    prompts.validate(level_shape, axis_index)
+    # The user places landmarks on the prompted axis's planes; validate against that axis (FR-022).
+    prompts.validate(level_shape, prompted_index)
 
     report(f"reading level {level} {level_shape}")
     volume = reader.read_level(level)
@@ -86,9 +97,41 @@ def run_masking(
     with tempfile.TemporaryDirectory(prefix="organ_masker_") as workdir:
         preflight_disk(estimate_intermediate_bytes(level_shape), workdir)
         accumulator = VoteAccumulator(level_shape, workdir)
-        report(f"sweeping axis '{axis_name}'")
-        mask = run_sweep(volume, axis_index, prompts, backend, workdir, config.direction)
-        accumulator.add(mask)
+
+        # Sweep the prompted axis first; its 3D mask seeds the other selected axes (FR-022).
+        report(f"sweeping prompted axis '{prompted_axis}' ({config.direction})")
+        seed_mask = run_sweep(
+            volume,
+            prompted_index,
+            prompts,
+            backend,
+            _axis_dir(workdir, prompted_axis),
+            config.direction,
+        )
+        if not seed_mask.any():
+            raise PipelineError(
+                "the prompted-axis sweep produced no foreground; cannot seed the other axes "
+                "(check the prompts and the selected level)"
+            )
+        accumulator.add(seed_mask)
+
+        for axis_name in config.axes[1:]:
+            axis_index = reader.axes.index(axis_name)
+            axis_prompts = seeds_from_mask(seed_mask, axis_index)
+            if not axis_prompts.prompts:
+                report(f"skipping axis '{axis_name}': no seeds derived")
+                continue
+            report(f"sweeping seeded axis '{axis_name}' ({config.direction})")
+            mask = run_sweep(
+                volume,
+                axis_index,
+                axis_prompts,
+                backend,
+                _axis_dir(workdir, axis_name),
+                config.direction,
+            )
+            accumulator.add(mask)
+
         consensus = accumulator.result(config.combine_rule)
 
         record = {
