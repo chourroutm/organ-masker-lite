@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .config import COARSEST_LEVEL, RunConfig
+from .config import COARSEST_LEVEL, PostProcessConfig, RunConfig
 from .prompts.model import PromptError, load_prompt_file
 
 
@@ -41,6 +41,26 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=("majority", "union", "intersection"),
         help="Consensus rule when combining sweeps (default: majority)",
     )
+    mask.add_argument(
+        "--fill-holes",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Fill interior holes in the mask (default: on; use --no-fill-holes to disable)",
+    )
+    mask.add_argument(
+        "--dilate",
+        type=int,
+        default=0,
+        dest="dilation_radius",
+        help="Dilation radius in voxels (default: 0)",
+    )
+    mask.add_argument(
+        "--erode",
+        type=int,
+        default=0,
+        dest="erosion_radius",
+        help="Erosion radius in voxels (default: 0)",
+    )
     mask.add_argument("--overwrite", action="store_true", help="Overwrite an existing output")
     mask.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     mask.set_defaults(func=_cmd_mask)
@@ -67,6 +87,11 @@ def _cmd_mask(args: argparse.Namespace) -> int:
             axes=[a.strip() for a in args.axes.split(",") if a.strip()],
             direction=args.direction,
             combine_rule=args.combine,
+            postprocess=PostProcessConfig(
+                fill_holes=args.fill_holes,
+                dilation_radius=args.dilation_radius,
+                erosion_radius=args.erosion_radius,
+            ),
             overwrite=args.overwrite,
         )
     except ValueError as exc:

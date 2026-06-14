@@ -185,12 +185,12 @@ leaves the raw mask unchanged; explicit radii are applied exactly.
 
 ### Tests for User Story 5 (write FIRST)
 
-- [ ] T050 [US5] Integration test: default fill-holes reduces holes; `--no-fill-holes`/disabled leaves raw mask; `--dilate`/`--erode` apply exactly, in `tests/integration/test_us5_postprocess.py`
+- [X] T050 [US5] Integration test: default fill-holes reduces holes; `--no-fill-holes`/disabled leaves raw mask; `--dilate`/`--erode` apply exactly, in `tests/integration/test_us5_postprocess.py`
 
 ### Implementation for User Story 5
 
-- [ ] T051 [US5] Implement morphology (dilation/erosion/fill-holes via `scipy.ndimage`) in `src/organ_masker_lite/postprocess/morphology.py`
-- [ ] T052 [US5] Wire post-processing into `src/organ_masker_lite/engine/pipeline.py` with defaults, plus CLI/API flags in `cli.py` and `api.py`
+- [X] T051 [US5] Implement morphology (dilation/erosion/fill-holes via `scipy.ndimage`) in `src/organ_masker_lite/postprocess/morphology.py`
+- [X] T052 [US5] Wire post-processing into `src/organ_masker_lite/engine/pipeline.py` with defaults, plus CLI/API flags in `cli.py` and `api.py`
 
 **Checkpoint**: Optional post-processing with documented defaults.
 

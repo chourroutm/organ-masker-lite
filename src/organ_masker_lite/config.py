@@ -21,6 +21,10 @@ class PostProcessConfig:
     dilation_radius: int = 0
     erosion_radius: int = 0
 
+    def __post_init__(self) -> None:
+        if self.dilation_radius < 0 or self.erosion_radius < 0:
+            raise ValueError("dilation_radius and erosion_radius must be non-negative")
+
     @property
     def is_noop(self) -> bool:
         return not self.fill_holes and self.dilation_radius == 0 and self.erosion_radius == 0

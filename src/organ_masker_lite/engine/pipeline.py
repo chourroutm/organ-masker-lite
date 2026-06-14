@@ -16,6 +16,7 @@ from ..config import RunConfig
 from ..io.reader import OmeZarrReader, ReaderError
 from ..io.validate import validate_ome_zarr
 from ..io.writer import write_mask
+from ..postprocess.morphology import postprocess_mask
 from ..prompts.model import PromptSet
 from .combine import VoteAccumulator
 from .sweep import run_sweep, seeds_from_mask
@@ -143,6 +144,10 @@ def compute_mask(
             accumulator.add(mask)
 
         consensus = accumulator.result(config.combine_rule)
+
+    if not config.postprocess.is_noop:
+        report("post-processing mask")
+        consensus = postprocess_mask(consensus, config.postprocess)
 
     record = {
         "input": str(input_path),
