@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "organ-masker-lite"
+version = "0.0.1"
+description = "Mask organs in OME-Zarr v0.5 volumes with a SAM-family backend."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "zarr>=3",
+    "ome-zarr-models>=1.6",
+    "scipy",
+]
+
+[project.optional-dependencies]
+sam2 = ["torch", "sam2"]
+sam3 = ["torch", "sam3"]
+interactive = ["napari"]
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+organ-masker-lite = "organ_masker_lite.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/organ_masker_lite"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "real_backend: tests that require an installed SAM backend and/or GPU (skipped by default)",
+    "slow: longer-running tests",
+]

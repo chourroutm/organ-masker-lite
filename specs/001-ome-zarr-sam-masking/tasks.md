@@ -30,10 +30,10 @@ Single Python package, `src/` layout: `src/organ_masker_lite/`, tests in `tests/
 
 **Purpose**: Project initialization and tooling.
 
-- [ ] T001 Create package skeleton and `pyproject.toml` (name `organ-masker-lite`, Python >=3.11, core deps `numpy`/`zarr>=3`/`ome-zarr-models`/`scipy`, extras `[sam2]`/`[sam3]`/`[interactive]`/`[dev]`) with `src/organ_masker_lite/__init__.py`
-- [ ] T002 [P] Configure `ruff` (lint + format) and `pytest` in `pyproject.toml` and add `tests/__init__.py`
-- [ ] T003 [P] Add `.gitignore` entries for the default model directory `organ_masker_models/` and temp/intermediate working files
-- [ ] T004 [P] Create empty subpackages with `__init__.py`: `src/organ_masker_lite/{io,prompts,backends,engine,postprocess}/`
+- [X] T001 Create package skeleton and `pyproject.toml` (name `organ-masker-lite`, Python >=3.11, core deps `numpy`/`zarr>=3`/`ome-zarr-models`/`scipy`, extras `[sam2]`/`[sam3]`/`[interactive]`/`[dev]`) with `src/organ_masker_lite/__init__.py`
+- [X] T002 [P] Configure `ruff` (lint + format) and `pytest` in `pyproject.toml` and add `tests/__init__.py`
+- [X] T003 [P] Add `.gitignore` entries for the default model directory `organ_masker_models/` and temp/intermediate working files
+- [X] T004 [P] Create empty subpackages with `__init__.py`: `src/organ_masker_lite/{io,prompts,backends,engine,postprocess}/`
 
 ---
 
@@ -44,27 +44,27 @@ Single Python package, `src/` layout: `src/organ_masker_lite/`, tests in `tests/
 **CRITICAL**: No user story work can begin until this phase is complete. Tests (T006-T015) are
 written before their implementations (T016-T025) and must fail first.
 
-- [ ] T005 [P] Add synthetic OME-Zarr v0.5 fixture generator (tiny multiscale volume with a known foreground blob) and a deterministic stub `VideoSegmenterBackend` in `tests/conftest.py`
-- [ ] T006 [P] Unit test for SAM2-compatible prompt model (coords/labels `{0,1}`, box, validation, file round-trip) in `tests/unit/test_prompts.py`
-- [ ] T007 [P] Unit test for `RunConfig` + model-directory resolution (default `./organ_masker_models`, env/option override, `allow_download`) in `tests/unit/test_config.py`
-- [ ] T008 [P] Unit test for consensus combine (majority/union/intersection over a vote accumulator; majority tie `votes == n/2` resolves to background) in `tests/unit/test_combine.py`
-- [ ] T009 [P] Unit test for OME-Zarr reader (level enumeration, axes, lazy slice access) in `tests/unit/test_reader.py`
-- [ ] T010 [P] Unit test for writer building an output pyramid with the SAME level count as input, copied transforms, nearest-neighbor resample, atomic write in `tests/unit/test_writer.py`
-- [ ] T011 [P] Unit test for input validation invoking `ome-zarr-models validate` and mapping its exit code in `tests/unit/test_validate.py`
-- [ ] T012 [P] Unit test for frame normalization to uint8 RGB and memmap frame store in `tests/unit/test_frames.py`
-- [ ] T013 [P] Engine smoke test (stub backend): single-axis forward pipeline over a synthetic volume produces a non-empty mask with the same level count as input, in `tests/integration/test_engine_smoke.py`
-- [ ] T014 [P] Unit test for weight management: auto-download invoked on first use via an injected fetcher (mocked, no network); `allow_download=False` with missing weights raises a clear error; pre-placed weights are used as-is, in `tests/unit/test_weights.py`
-- [ ] T015 [P] Unit test: pipeline preflight raises a clear, actionable error when estimated intermediate size (frame memmap + vote accumulator) exceeds available disk, in `tests/unit/test_preflight.py`
-- [ ] T016 [P] Implement OME-Zarr v0.5 reader (multiscale levels, axes, lazy slice access) in `src/organ_masker_lite/io/reader.py`
-- [ ] T017 [P] Implement input validation via `ome-zarr-models validate` subprocess in `src/organ_masker_lite/io/validate.py`
-- [ ] T018 [P] Implement `Prompt`/`PromptSet` (SAM2 convention, validation, JSON file load/save) in `src/organ_masker_lite/prompts/model.py`
-- [ ] T019 [P] Implement `RunConfig`, model-directory resolution, and weight resolution with an injectable downloader (auto-download on first use; `--no-download` raises a clear error when weights are absent) in `src/organ_masker_lite/config.py`
-- [ ] T020 [P] Define `VideoSegmenterBackend` protocol in `src/organ_masker_lite/backends/base.py` and registry (default `sam2`) in `src/organ_masker_lite/backends/registry.py`
-- [ ] T021 Implement frame normalization + memmap frame store in `src/organ_masker_lite/engine/frames.py` (depends on T016)
-- [ ] T022 [P] Implement consensus combine via memmap vote accumulator (majority/union/intersection) in `src/organ_masker_lite/engine/combine.py`
-- [ ] T023 Implement OME-Zarr v0.5 writer (single binary 0/1 foreground mask per FR-021; output pyramid matching input levels, transforms, nearest-neighbor resample, atomic temp-store move, embed run record) in `src/organ_masker_lite/io/writer.py` (depends on T016)
-- [ ] T024 Implement single-axis forward sweep propagation through the backend protocol in `src/organ_masker_lite/engine/sweep.py` (depends on T013, T020, T021)
-- [ ] T025 Implement pipeline orchestration (preflight intermediate-size/disk check -> validate -> sweep -> combine -> write) with a clear error when intermediates won't fit, in `src/organ_masker_lite/engine/pipeline.py` (depends on T013, T016-T024)
+- [X] T005 [P] Add synthetic OME-Zarr v0.5 fixture generator (tiny multiscale volume with a known foreground blob) and a deterministic stub `VideoSegmenterBackend` in `tests/conftest.py`
+- [X] T006 [P] Unit test for SAM2-compatible prompt model (coords/labels `{0,1}`, box, validation, file round-trip) in `tests/unit/test_prompts.py`
+- [X] T007 [P] Unit test for `RunConfig` + model-directory resolution (default `./organ_masker_models`, env/option override, `allow_download`) in `tests/unit/test_config.py`
+- [X] T008 [P] Unit test for consensus combine (majority/union/intersection over a vote accumulator; majority tie `votes == n/2` resolves to background) in `tests/unit/test_combine.py`
+- [X] T009 [P] Unit test for OME-Zarr reader (level enumeration, axes, lazy slice access) in `tests/unit/test_reader.py`
+- [X] T010 [P] Unit test for writer building an output pyramid with the SAME level count as input, copied transforms, nearest-neighbor resample, atomic write in `tests/unit/test_writer.py`
+- [X] T011 [P] Unit test for input validation invoking `ome-zarr-models validate` and mapping its exit code in `tests/unit/test_validate.py`
+- [X] T012 [P] Unit test for frame normalization to uint8 RGB and memmap frame store in `tests/unit/test_frames.py`
+- [X] T013 [P] Engine smoke test (stub backend): single-axis forward pipeline over a synthetic volume produces a non-empty mask with the same level count as input, in `tests/integration/test_engine_smoke.py`
+- [ ] T014 [P] Unit test for weight management: auto-download invoked on first use via an injected fetcher (mocked, no network); `allow_download=False` with missing weights raises a clear error; pre-placed weights are used as-is, in `tests/unit/test_weights.py` _(DEFERRED: only meaningful with the real SAM backend, which cannot run in this environment; to land with T030 hardening)_
+- [X] T015 [P] Unit test: pipeline preflight raises a clear, actionable error when estimated intermediate size (frame memmap + vote accumulator) exceeds available disk, in `tests/unit/test_preflight.py`
+- [X] T016 [P] Implement OME-Zarr v0.5 reader (multiscale levels, axes, lazy slice access) in `src/organ_masker_lite/io/reader.py`
+- [X] T017 [P] Implement input validation via `ome-zarr-models validate` subprocess in `src/organ_masker_lite/io/validate.py`
+- [X] T018 [P] Implement `Prompt`/`PromptSet` (SAM2 convention, validation, JSON file load/save) in `src/organ_masker_lite/prompts/model.py`
+- [ ] T019 [P] Implement `RunConfig`, model-directory resolution, and weight resolution with an injectable downloader (auto-download on first use; `--no-download` raises a clear error when weights are absent) in `src/organ_masker_lite/config.py` _(PARTIAL: `RunConfig` + model-directory resolution + `allow_download` flag implemented and tested (T007); injectable weight downloader DEFERRED with T014)_
+- [X] T020 [P] Define `VideoSegmenterBackend` protocol in `src/organ_masker_lite/backends/base.py` and registry (default `sam2`) in `src/organ_masker_lite/backends/registry.py`
+- [X] T021 Implement frame normalization + memmap frame store in `src/organ_masker_lite/engine/frames.py` (depends on T016)
+- [X] T022 [P] Implement consensus combine via memmap vote accumulator (majority/union/intersection) in `src/organ_masker_lite/engine/combine.py`
+- [X] T023 Implement OME-Zarr v0.5 writer (single binary 0/1 foreground mask per FR-021; output pyramid matching input levels, transforms, nearest-neighbor resample, atomic temp-store move, embed run record) in `src/organ_masker_lite/io/writer.py` (depends on T016)
+- [X] T024 Implement single-axis forward sweep propagation through the backend protocol in `src/organ_masker_lite/engine/sweep.py` (depends on T013, T020, T021)
+- [X] T025 Implement pipeline orchestration (preflight intermediate-size/disk check -> validate -> sweep -> combine -> write) with a clear error when intermediates won't fit, in `src/organ_masker_lite/engine/pipeline.py` (depends on T013, T016-T024)
 
 **Checkpoint**: Foundation ready - the engine runs end-to-end with the stub backend.
 
@@ -80,18 +80,18 @@ confirm a valid OME-Zarr v0.5 mask with the same level count as the input, no in
 
 ### Tests for User Story 1 (write FIRST, must fail; in the directed order)
 
-- [ ] T026 [US1] Integration test: SINGLE-POSITIVE-POINT input yields a mask whose foreground includes the point, output level count equals input, in `tests/integration/test_us1_single_point.py`
-- [ ] T027 [US1] Integration test: BOUNDING-BOX input yields foreground predominantly within the box, in `tests/integration/test_us1_box.py`
-- [ ] T028 [US1] Integration test: EXCLUSION-POINT (label 0) removes the excluded region from the foreground, in `tests/integration/test_us1_exclusion.py`
-- [ ] T029 [P] [US1] CLI contract test (args schema, exit codes, overwrite guard, invalid input/level/prompts, `--no-download` with missing weights, no partial output) per `contracts/cli.md` in `tests/contract/test_cli_mask.py`
+- [X] T026 [US1] Integration test: SINGLE-POSITIVE-POINT input yields a mask whose foreground includes the point, output level count equals input, in `tests/integration/test_us1_single_point.py`
+- [X] T027 [US1] Integration test: BOUNDING-BOX input yields foreground predominantly within the box, in `tests/integration/test_us1_box.py`
+- [X] T028 [US1] Integration test: EXCLUSION-POINT (label 0) removes the excluded region from the foreground, in `tests/integration/test_us1_exclusion.py`
+- [X] T029 [P] [US1] CLI contract test (args schema, exit codes, overwrite guard, invalid input/level/prompts, `--no-download` with missing weights, no partial output) per `contracts/cli.md` in `tests/contract/test_cli_mask.py`
 
 ### Implementation for User Story 1
 
-- [ ] T030 [P] [US1] Implement SAM2 backend adapter (init_state, add_new_points_or_box, propagate_in_video) in `src/organ_masker_lite/backends/sam2.py`
-- [ ] T031 [US1] Implement argparse `mask` command wiring prompt-file load -> pipeline -> write in `src/organ_masker_lite/cli.py`
-- [ ] T032 [US1] Implement CLI error handling, exit codes, overwrite guard, and progress reporting in `src/organ_masker_lite/cli.py` (depends on T031)
-- [ ] T033 [US1] Register console script `organ-masker-lite` and `python -m organ_masker_lite` in `pyproject.toml` and `src/organ_masker_lite/__main__.py`
-- [ ] T034 [P] [US1] Real-SAM2 smoke integration test, marked skip-if-no-weights/GPU, in `tests/integration/test_us1_sam2_smoke.py`
+- [X] T030 [P] [US1] Implement SAM2 backend adapter (init_state, add_new_points_or_box, propagate_in_video) in `src/organ_masker_lite/backends/sam2.py`
+- [X] T031 [US1] Implement argparse `mask` command wiring prompt-file load -> pipeline -> write in `src/organ_masker_lite/cli.py`
+- [X] T032 [US1] Implement CLI error handling, exit codes, overwrite guard, and progress reporting in `src/organ_masker_lite/cli.py` (depends on T031)
+- [X] T033 [US1] Register console script `organ-masker-lite` and `python -m organ_masker_lite` in `pyproject.toml` and `src/organ_masker_lite/__main__.py`
+- [X] T034 [P] [US1] Real-SAM2 smoke integration test, marked skip-if-no-weights/GPU, in `tests/integration/test_us1_sam2_smoke.py`
 
 **Checkpoint**: MVP complete - single point, box, and exclusion masking work via the CLI.
 
