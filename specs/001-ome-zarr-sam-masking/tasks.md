@@ -219,11 +219,11 @@ preview updates, export a valid OME-Zarr v0.5 mask.
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T056 [P] Performance benchmark asserting plan.md targets (runtime on reference volume; peak RAM bounded and depth-independent; coarser level faster, SC-006) in `tests/performance/test_benchmark.py`
-- [ ] T057 [P] Write `README.md` with install (extras) and usage derived from `quickstart.md`
-- [ ] T058 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/`
-- [ ] T059 [P] Document the run-record reproducibility format with an example in `docs/run-record.md`
-- [ ] T060 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
+- [X] T056 [P] Performance benchmark asserting plan.md targets (runtime on reference volume; peak RAM bounded and depth-independent; coarser level faster, SC-006) in `tests/performance/test_benchmark.py`
+- [X] T057 [P] Write `README.md` with install (extras) and usage derived from `quickstart.md`
+- [X] T058 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/`
+- [X] T059 [P] Document the run-record reproducibility format with an example in `docs/run-record.md`
+- [X] T060 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
 
 ---
 

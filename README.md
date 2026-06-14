@@ -1,0 +1,124 @@
+# organ-masker-lite
+
+Mask organs in OME-Zarr v0.5 volumes with a SAM-family backend. Place a few landmarks on a single
+plane, and organ-masker-lite propagates them across the volume -- treating each axis sweep as a
+"video" of slices for SAM2/SAM3 -- and writes a single binary OME-Zarr v0.5 mask whose pyramid
+matches the input's levels.
+
+Three entry points share one engine (CLI, Python API, interactive napari session), so they produce
+identical results for identical inputs.
+
+## Features
+
+- OME-Zarr v0.5 in, OME-Zarr v0.5 mask out, validated with `ome-zarr-models validate`.
+- SAM2 (default) and SAM3 as first-class, interchangeable backends.
+- Single- or multi-axis sweeps with forward or forward-and-reverse propagation; majority / union /
+  intersection consensus. In multi-axis runs you prompt one plane and the other axes are seeded
+  automatically.
+- Pick any pyramid (binning) level; the coarsest level is the default and is faster.
+- Optional morphological post-processing (fill-holes on by default; dilation/erosion off).
+- SAM-like Python API and an interactive napari session.
+- Out-of-core intermediates (on-disk memmap frame stack and vote accumulator) keep RAM bounded.
+- Every output embeds a `run_record.json` for reproducibility (see [docs/run-record.md](docs/run-record.md)).
+
+## Install
+
+Python 3.11+. Install with a backend extra:
+
+```bash
+pip install -e ".[sam2]"                 # default backend (torch + sam2)
+pip install -e ".[sam3]"                 # optional second backend
+pip install -e ".[interactive]"          # optional napari viewer
+pip install -e ".[dev]"                  # tests + linting
+```
+
+`ome-zarr-models` must be importable and its `ome-zarr-models validate` CLI on `PATH`. A CUDA GPU
+(>= 8 GB) is recommended for the real backends; weights auto-download into `./organ_masker_models`
+on first use (override with `--model-dir` / `ORGAN_MASKER_MODEL_DIR`, or use `--no-download` with
+pre-placed weights for offline use).
+
+## CLI
+
+```bash
+organ-masker-lite mask INPUT OUTPUT --prompts PROMPTS [options]
+```
+
+Single positive point:
+
+```bash
+cat > prompts.json <<'JSON'
+{"objects":[{"obj_id":0,"points":[{"frame":120,"xy":[340,512],"label":1}]}]}
+JSON
+
+organ-masker-lite mask input.ome.zarr output.ome.zarr \
+  --prompts prompts.json --backend sam2 --level 3 --axes z --direction forward
+```
+
+Key options:
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `--backend {sam2,sam3}` | `sam2` | Segmentation backend. |
+| `--level INT` | coarsest | Pyramid level to run on. |
+| `--axes AXES` | `z` | Comma-separated sweep axes; the first is the prompted axis. |
+| `--direction {forward,forward_reverse}` | `forward` | Propagation mode. |
+| `--combine {majority,union,intersection}` | `majority` | Consensus across sweeps. |
+| `--fill-holes / --no-fill-holes` | on | Fill interior holes. |
+| `--dilate INT` / `--erode INT` | `0` | Morphology radii (voxels). |
+| `--overwrite` | off | Replace an existing output. |
+
+### Prompt file
+
+```json
+{
+  "objects": [
+    {
+      "obj_id": 0,
+      "points": [{"frame": 120, "xy": [340, 512], "label": 1}],
+      "box": {"frame": 120, "xyxy": [300, 480, 380, 560]}
+    }
+  ]
+}
+```
+
+`label` is `1` for a positive (include) point and `0` for a negative (exclude) point. At least one
+positive point or a box is required.
+
+## Python API
+
+The API mirrors the SAM/SAM2 predictor structure:
+
+```python
+from organ_masker_lite import OrganMaskPredictor
+
+p = OrganMaskPredictor(backend="sam2")
+p.set_volume("input.ome.zarr", level=3)            # mirrors SAM set_image
+p.add_points(frame_index=120, point_coords=[[340, 512]], point_labels=[1])
+mask = p.predict(axes=["z"], direction="forward")  # returns a MaskResult
+mask.save("api_out.ome.zarr")
+```
+
+`add_box(frame_index, box=[x0, y0, x1, y1])` adds a box; both prompt methods may be combined. The
+saved output equals the CLI output for identical inputs/prompts.
+
+## Interactive session
+
+```bash
+pip install -e ".[interactive]"
+organ-masker-lite interactive input.ome.zarr --backend sam2 --level 3
+```
+
+Place landmarks on the points layer, press `p` to preview the mask and `e` to export it. The session
+runs on the same engine as the CLI and API.
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+ruff check src tests && ruff format --check src tests
+pytest                       # add -m "not slow" to skip the timing/benchmark tests
+```
+
+Real-backend tests are marked `real_backend` and are skipped unless torch + sam2/sam3 (and, for the
+interactive smoke test, napari) are installed. A deterministic stub backend exercises the full
+engine, IO, prompts, and CLI/API without a GPU.
