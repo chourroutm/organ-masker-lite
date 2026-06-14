@@ -64,7 +64,7 @@ C-LOG-API-3)
 
 ```bash
 organ-masker-lite mask input.ome.zarr output.ome.zarr --prompts prompts.json \
-  --log-dir /tmp/oml-logs --log-level low
+  --log-dir /tmp/oml-logs --log-level WARNING
 ls /tmp/oml-logs/                            # log written to the overridden directory
 ```
 

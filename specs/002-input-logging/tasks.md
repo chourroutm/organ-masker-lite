@@ -66,14 +66,15 @@ a log file capturing the command and config.
 - [ ] T008 [US1] Integration test: a successful CLI `mask` run writes `<log-dir>/<run-id>.log` with the command and effective config (C-LOG-CLI-1) in `tests/integration/test_log_cli.py`
 - [ ] T009 [US1] Integration test: a CLI run that fails before output (e.g., bad level) still writes a log file (C-LOG-CLI-2, FR-002) in `tests/integration/test_log_cli_failure.py`
 - [ ] T010 [P] [US1] Integration test: each invocation writes a distinct, non-colliding log file (C-LOG-CLI-3), and the run id in the log equals the run id in the output run-record (C-LOG-CLI-7, FR-005) in `tests/integration/test_log_cli_runid.py`
+- [ ] T011 [P] [US1] Integration test: with logging active, the tool's stdout contains no log lines and any machine-readable stdout stays parseable; logging notices appear on stderr only (C-LOG-CLI-4, FR-008, SC-005) in `tests/integration/test_log_stdout_clean.py`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Record the invocation block (command line, parsed arguments, resolved effective configuration) on entry, before validation, in `src/organ_masker_lite/input_log.py`
-- [ ] T012 [US1] Wire the log lifecycle into the CLI entry so every invocation (including failures) is logged, in `src/organ_masker_lite/cli.py`
-- [ ] T013 [US1] Embed the run identifier in feature 001's output run-record for log/output correlation (FR-005) in `src/organ_masker_lite/io/writer.py`
+- [ ] T012 [US1] Record the invocation block (command line, parsed arguments, resolved effective configuration) on entry, before validation, in `src/organ_masker_lite/input_log.py`
+- [ ] T013 [US1] Wire the log lifecycle into the CLI entry so every invocation (including failures) is logged, in `src/organ_masker_lite/cli.py`
+- [ ] T014 [US1] Embed the run identifier in feature 001's output run-record for log/output correlation (FR-005) in `src/organ_masker_lite/io/writer.py`
 
-**Checkpoint**: MVP - all CLI invocations, success or failure, are logged.
+**Checkpoint**: MVP - all CLI invocations, success or failure, are logged; stdout stays clean.
 
 ---
 
@@ -87,14 +88,14 @@ source; run via the API and confirm equivalent logging.
 
 ### Tests for User Story 2 (write FIRST)
 
-- [ ] T014 [US2] Integration test: CLI prompts are recorded (coordinates, labels, optional box, frame/axis) with the prompt-file source, in `tests/integration/test_log_prompts_cli.py`
-- [ ] T015 [US2] Integration test: API-supplied prompts are logged equivalently with `prompt_source="api"` (C-LOG-API-1) and the run id is exposed on the result (C-LOG-API-3) in `tests/integration/test_log_api.py`
-- [ ] T016 [P] [US2] Unit test: a large prompt set is captured in full with the count in the header (FR-010, C-LOG-API-4) in `tests/unit/test_input_log_prompts.py`
+- [ ] T015 [US2] Integration test: CLI prompts are recorded (coordinates, labels, optional box, frame/axis) with the prompt-file source, in `tests/integration/test_log_prompts_cli.py`
+- [ ] T016 [US2] Integration test: API-supplied prompts are logged equivalently with `prompt_source="api"` (C-LOG-API-1) and the run id is exposed on the result (C-LOG-API-3) in `tests/integration/test_log_api.py`
+- [ ] T017 [P] [US2] Unit test: a large prompt set is captured in full with the count in the header (FR-010, C-LOG-API-4) in `tests/unit/test_input_log_prompts.py`
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Record the prompts block from the `PromptSet` (full content + count + source) in `src/organ_masker_lite/input_log.py`
-- [ ] T018 [US2] Wire the log lifecycle into the API `predict` path (`prompt_source="api"`; expose the run id on the result) in `src/organ_masker_lite/api.py`
+- [ ] T018 [US2] Record the prompts block from the `PromptSet` (full content + count + source) in `src/organ_masker_lite/input_log.py`
+- [ ] T019 [US2] Wire the log lifecycle into the API `predict` path (`prompt_source="api"`; expose the run id on the result) in `src/organ_masker_lite/api.py`
 
 **Checkpoint**: Prompts recoverable from the log for both CLI and API runs.
 
@@ -110,13 +111,13 @@ verbosity are honored.
 
 ### Tests for User Story 3 (write FIRST)
 
-- [ ] T019 [US3] Integration test: `--log-dir` and `--log-level` override the defaults (C-LOG-CLI-6, FR-007) in `tests/integration/test_log_options.py`
-- [ ] T020 [US3] Integration test: an unwritable `--log-dir` leaves the masking run successful with a single stderr warning (C-LOG-CLI-5, FR-009) in `tests/integration/test_log_besteffort.py`
+- [ ] T020 [US3] Integration test: `--log-dir` and `--log-level` override the defaults (C-LOG-CLI-6, FR-007) in `tests/integration/test_log_options.py`
+- [ ] T021 [US3] Integration test: an unwritable `--log-dir` leaves the masking run successful with a single stderr warning (C-LOG-CLI-5, FR-009) in `tests/integration/test_log_besteffort.py`
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Add `--log-dir` and `--log-level` CLI options and `log_dir`/`log_level` API parameters, mapping verbosity to logging levels, in `src/organ_masker_lite/cli.py` and `src/organ_masker_lite/api.py`
-- [ ] T022 [US3] Ensure lower verbosity never drops the core invocation/prompt record needed for reproducibility, in `src/organ_masker_lite/input_log.py`
+- [ ] T022 [US3] Add `--log-dir` and `--log-level` CLI options (standard logging level names; default `INFO`) and `log_dir`/`log_level` API parameters in `src/organ_masker_lite/cli.py` and `src/organ_masker_lite/api.py`
+- [ ] T023 [US3] Ensure lower verbosity never drops the core invocation/prompt record needed for reproducibility, in `src/organ_masker_lite/input_log.py`
 
 **Checkpoint**: Destination and verbosity configurable; logging never corrupts stdout.
 
@@ -124,10 +125,10 @@ verbosity are honored.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T023 [P] Performance test: logging adds < 50 ms per invocation and does not scale with volume size, in `tests/performance/test_log_overhead.py`
-- [ ] T024 [P] Update `README.md`/docs with logging behavior and the `--log-dir`/`--log-level` options
-- [ ] T025 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/input_log.py` and touched files
-- [ ] T026 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
+- [ ] T024 [P] Performance test: logging adds < 50 ms per invocation and does not scale with volume size, in `tests/performance/test_log_overhead.py`
+- [ ] T025 [P] Update `README.md`/docs with logging behavior and the `--log-dir`/`--log-level` options
+- [ ] T026 [P] Type-hint/docstring pass and `ruff`/`ruff format` clean across `src/organ_masker_lite/input_log.py` and touched files
+- [ ] T027 Execute the `quickstart.md` scenarios end-to-end as a final validation pass
 
 ---
 
@@ -141,7 +142,7 @@ verbosity are honored.
 - **US2 (Phase 4)**: Depends on Foundational + US1 lifecycle wiring.
 - **US3 (Phase 5)**: Depends on Foundational; independent of US2 (both build on the US1 wiring).
 - **Polish (Phase 6)**: Depends on the targeted stories.
-- **Cross-feature**: Builds on feature 001's CLI, API, `RunConfig`, `PromptSet`, and output run-record; implement after/alongside those exist.
+- **Cross-feature**: Builds on feature 001's CLI, API, `RunConfig`, `PromptSet`, and output run-record; implement after/alongside those exist (T013/T014/T019/T022 edit feature-001 files).
 
 ### Within Each User Story
 
@@ -152,10 +153,10 @@ verbosity are honored.
 
 - Setup: T002 in parallel with T001.
 - Foundational: tests T003-T004 in parallel; impl T005 and T006 in parallel (distinct files), then T007.
-- US1: T010 [P] alongside T008/T009 authoring; impl T011-T013 are mostly sequential (shared module/CLI).
-- US2: T016 [P] alongside T014/T015.
+- US1: T010-T011 [P] alongside T008/T009 authoring; impl T012-T014 are mostly sequential (shared module/CLI).
+- US2: T017 [P] alongside T015/T016.
 - US3 can be developed in parallel with US2 once Foundational + US1 are done.
-- Polish: T023, T024, T025 in parallel.
+- Polish: T024, T025, T026 in parallel.
 
 ### Parallel Example: Foundational
 
@@ -173,7 +174,7 @@ Task: "Implement LogConfig in src/organ_masker_lite/config.py"
 ### MVP First (User Story 1 only)
 
 1. Complete Phase 1 (Setup) and Phase 2 (Foundational).
-2. Complete Phase 3 (US1): every CLI invocation, success or failure, is logged.
+2. Complete Phase 3 (US1): every CLI invocation, success or failure, is logged and stdout stays clean.
 3. STOP and VALIDATE: run the US1 tests and quickstart Scenarios 1-3.
 
 ### Incremental Delivery

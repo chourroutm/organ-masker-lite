@@ -10,7 +10,7 @@ global options; logging is on by default.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--log-dir PATH` | `./organ_masker_logs` | Directory for per-invocation log files (FR-007); also via env var |
-| `--log-level LEVEL` | full-detail default | Verbosity of ancillary log messages (FR-007); never drops the core invocation/prompt record |
+| `--log-level LEVEL` | `INFO` | Standard logging level name (`DEBUG`, `INFO`, `WARNING`, `ERROR`); controls ancillary messages only and never drops the core invocation/prompt record (FR-007) |
 
 (No `--no-log` in v1; logging is best-effort and always attempted. A strict/disable mode is out of
 scope unless requested.)
