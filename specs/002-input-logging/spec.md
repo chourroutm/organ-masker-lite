@@ -14,12 +14,20 @@ organ-masker-lite records, for every masking invocation, the inputs that drove i
 command-line invocation (command, arguments, options, and the resolved effective configuration
 after defaults are applied) and the landmark prompts used (points with labels, optional box, per
 frame/axis), regardless of whether the prompts arrived from a CLI prompt file or the programmatic
-API. These are written to a chronological, append-only log so a user can audit, debug, and
+API. These are written to a per-invocation plain-text log file so a user can audit, debug, and
 reconstruct what was asked of the tool.
 
 This complements the reproducibility run-record that is written alongside a successful output
 (feature 001, FR-014): unlike that sidecar, the input log is written even when a run fails or is
 rejected before any output exists, giving a durable trail for troubleshooting bad inputs.
+
+## Clarifications
+
+### Session 2026-06-14
+
+- Q: What format should the input log use? → A: Plain text (human-readable; not a structured machine format).
+- Q: How should log entries be organized on disk? → A: One plain-text log file per invocation, named by run identifier/timestamp.
+- Q: Where should the default log location be (overridable)? → A: A logs subdirectory of the current working directory (e.g. `organ_masker_logs/`), gitignored; overridable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -98,8 +106,9 @@ run with an overridden destination and a quieter verbosity, and confirm the log 
 - What happens when the log destination is not writable (permissions, full disk)? The tool surfaces
   a clear warning and continues the run (logging failure must not silently abort masking), or fails
   clearly if logging is explicitly required.
-- How are concurrent invocations that target the same log handled so entries are not interleaved or
-  corrupted?
+- How are concurrent invocations handled? Each invocation writes its own uniquely-named log file
+  (run id/timestamp), so concurrent runs do not interleave or corrupt each other; name collisions
+  must be avoided (e.g., include a unique run identifier).
 - How is a very large prompt set recorded without making the log unusable?
 - What is logged when an invocation is interrupted mid-run (the entry must still reflect the inputs
   that were provided)?
@@ -112,8 +121,9 @@ run with an overridden destination and a quieter verbosity, and confirm the log 
 
 ### Functional Requirements
 
-- **FR-001**: System MUST append a timestamped log entry for every CLI invocation, capturing the
-  command, the provided arguments/options, and the resolved effective configuration (after defaults).
+- **FR-001**: System MUST write a timestamped, plain-text log file for every CLI invocation,
+  capturing the command, the provided arguments/options, and the resolved effective configuration
+  (after defaults).
 - **FR-002**: System MUST write the input log entry even when the invocation fails or is rejected
   before producing output.
 - **FR-003**: System MUST log the landmark prompts used for a run (point coordinates, labels,
@@ -123,24 +133,26 @@ run with an overridden destination and a quieter verbosity, and confirm the log 
   supplied via a CLI prompt file.
 - **FR-005**: System MUST associate each log entry with a run identifier and timestamp so entries
   can be correlated to a specific invocation (and to its output run-record when one exists).
-- **FR-006**: System MUST append to the log without overwriting prior entries, keeping invocations
-  distinct.
-- **FR-007**: System MUST write logs to a documented default destination and MUST allow the user to
-  override the destination and the verbosity level.
+- **FR-006**: System MUST write one log file per invocation, named by run identifier/timestamp, so
+  invocations stay distinct and no run overwrites another run's log file.
+- **FR-007**: System MUST write logs by default to a logs subdirectory of the current working
+  directory (e.g. `organ_masker_logs/`) and MUST allow the user to override the destination
+  directory and the verbosity level.
 - **FR-008**: System MUST keep log output separate from any machine-readable output stream so that
   logging never corrupts the tool's parseable output.
 - **FR-009**: System MUST handle a failure to write the log gracefully: by default a logging failure
   produces a clear warning and does not abort the masking run.
 - **FR-010**: System MUST record large prompt sets in a way that preserves reproducibility (record
-  the count and capture or reference the full prompt content rather than truncating it away).
+  the count and capture the full prompt content in the plain-text log rather than truncating it
+  away).
 
 ### Key Entities *(include if feature involves data)*
 
-- **Input Log**: The chronological, append-only record of invocations; the durable trail of what was
-  asked of the tool.
-- **Invocation Entry**: One logged invocation; attributes include timestamp, run identifier, the
-  command line, parsed arguments/options, resolved effective configuration, and run outcome
-  (succeeded/failed) when known.
+- **Input Log**: The collection of per-invocation plain-text log files in the log directory; the
+  durable trail of what was asked of the tool.
+- **Invocation Log File**: One plain-text file per invocation, named by run identifier/timestamp;
+  contents include timestamp, run identifier, the command line, parsed arguments/options, resolved
+  effective configuration, the prompts used, and run outcome (succeeded/failed) when known.
 - **Prompt Log Detail**: The prompts recorded for an invocation (coordinates, labels, optional box,
   frame/axis, object association) and their source (file path or API).
 - **Run Identifier**: A value correlating an invocation's log entry with its output run-record
@@ -150,8 +162,8 @@ run with an overridden destination and a quieter verbosity, and confirm the log 
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of CLI invocations, including failed ones, produce a log entry capturing the
-  command and effective configuration.
+- **SC-001**: 100% of CLI invocations, including failed ones, produce a plain-text log file
+  capturing the command and effective configuration.
 - **SC-002**: From the log alone, a user can identify the command, options, and prompts that drove
   any given run, with no access to the original prompt file required.
 - **SC-003**: Prompts supplied via the API and via a CLI prompt file are both recoverable from the
@@ -168,11 +180,11 @@ run with an overridden destination and a quieter verbosity, and confirm the log 
 - This feature concerns logging the *inputs* (CLI invocation + prompts). It complements, and does
   not replace, the output run-record written alongside successful masks (feature 001, FR-014); the
   run identifier ties the two together.
-- The default log destination is a log file in a documented per-run or per-project location, with
-  console output at a default verbosity; both are overridable. Exact paths/levels are finalized in
-  planning.
-- Log entries are human-readable and structured enough to be parsed; the precise format is finalized
-  in planning.
+- By default each invocation writes its own plain-text log file into a logs subdirectory of the
+  current working directory (e.g. `organ_masker_logs/`), overridable via option/environment. Like
+  feature 001's model directory, this default location should be excluded from version control.
+- Logs are plain text and human-readable, not a structured machine format; verbosity is adjustable.
+  The exact filename pattern and verbosity levels are finalized in planning.
 - Logged inputs (paths, coordinates, option values) are not treated as secrets; no redaction is
   performed by default.
 - Logging is best-effort by default (a logging failure warns but does not abort the run); a stricter
