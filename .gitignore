@@ -13,3 +13,9 @@ build/
 # organ-masker-lite generated artifacts
 organ_masker_models/
 organ_masker_logs/
+
+# Test reports
+test.xml
+*.junit.xml
+.coverage
+htmlcov/
