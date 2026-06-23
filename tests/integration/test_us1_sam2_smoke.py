@@ -7,18 +7,16 @@ OME-Zarr mask with the same level count as the input -- not segmentation quality
 
 from __future__ import annotations
 
-import importlib.util
-
 import pytest
+
+from ..conftest import real_backend_available
 
 pytestmark = pytest.mark.real_backend
 
-_HAVE_SAM2 = (
-    importlib.util.find_spec("torch") is not None and importlib.util.find_spec("sam2") is not None
-)
+_HAVE_SAM2 = real_backend_available("sam2")
 
 
-@pytest.mark.skipif(not _HAVE_SAM2, reason="torch/sam2 not installed")
+@pytest.mark.skipif(not _HAVE_SAM2, reason="sam2 backend not constructable (torch/sam2 missing)")
 def test_sam2_backend_end_to_end(single_blob_zarr, tmp_path):
     from organ_masker_lite.backends.registry import get_backend
     from organ_masker_lite.config import RunConfig

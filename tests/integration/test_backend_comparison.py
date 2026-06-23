@@ -10,7 +10,6 @@ harness runs in CI. The real SAM2-vs-SAM3 comparison is the skip-guarded counter
 
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
 
@@ -20,7 +19,7 @@ import pytest
 from organ_masker_lite.cli import main
 from organ_masker_lite.io.reader import OmeZarrReader
 
-from ..conftest import write_ome_zarr
+from ..conftest import real_backend_available, write_ome_zarr
 
 
 def _mask_iou(a: np.ndarray, b: np.ndarray) -> float:
@@ -81,11 +80,11 @@ def test_two_backends_selectable_produce_valid_comparable_masks(input_and_prompt
     assert 0.0 < iou <= 1.0
 
 
-_HAVE_BOTH = all(importlib.util.find_spec(m) is not None for m in ("torch", "sam2", "sam3"))
+_HAVE_BOTH = real_backend_available("sam2") and real_backend_available("sam3")
 
 
 @pytest.mark.real_backend
-@pytest.mark.skipif(not _HAVE_BOTH, reason="torch/sam2/sam3 not installed")
+@pytest.mark.skipif(not _HAVE_BOTH, reason="sam2 and sam3 backends not both constructable")
 def test_sam2_vs_sam3_like_for_like(input_and_prompts, tmp_path):
     store, prompts = input_and_prompts
     out2 = tmp_path / "sam2.ome.zarr"
