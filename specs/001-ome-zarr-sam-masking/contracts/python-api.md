@@ -25,7 +25,7 @@ mask.save("output.ome.zarr")
 - `allow_download`: auto-download missing weights when true; else error if absent (FR-020).
 
 ### `set_volume(store_path, level=<default>)`
-- Validates the store via `ome-zarr-models validate` (FR-001), selects the level (FR-003), prepares
+- Validates the store in-process via `ome-zarr-models` (FR-001), selects the level (FR-003), prepares
   lazy slice access. Mirrors SAM's `set_image`.
 
 ### Prompt methods (SAM-convention arguments)

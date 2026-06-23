@@ -16,7 +16,8 @@ Represents the validated OME-Zarr v0.5 multiscale input.
 | `axes` | list[str] | Axis names/order from OME metadata (e.g. `["z","y","x"]`) |
 
 Validation rules:
-- MUST pass `ome-zarr-models validate` before use (FR-001); otherwise construction fails.
+- MUST pass in-process OME-Zarr v0.5 validation via `ome-zarr-models` before use (FR-001);
+  otherwise construction fails.
 - MUST expose >= 1 level.
 
 ## LevelInfo

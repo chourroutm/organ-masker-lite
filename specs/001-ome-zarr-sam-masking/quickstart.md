@@ -13,7 +13,8 @@ not duplicated (see [contracts/](./contracts/) and [data-model.md](./data-model.
   pip install -e ".[sam2]"        # default backend
   # optional: pip install -e ".[sam3]" ".[interactive]"
   ```
-- `ome-zarr-models` must be importable and its `ome-zarr-models validate` CLI on PATH.
+- `ome-zarr-models` is bundled as a dependency and performs input validation in-process; no
+  validator command needs to be on PATH (feature 003).
 - A small OME-Zarr v0.5 input store. Tests generate a synthetic one (see Test Data below); for
   manual runs, point at any v0.5 multiscale store.
 - For real backends: a CUDA GPU is recommended; weights auto-download into `./organ_masker_models`
@@ -22,8 +23,9 @@ not duplicated (see [contracts/](./contracts/) and [data-model.md](./data-model.
 ## Validate the environment
 
 ```bash
-ome-zarr-models validate path/to/input.ome.zarr      # must exit 0
 organ-masker-lite --help
+# Input validation runs in-process when you invoke `organ-masker-lite mask`; no separate
+# validator command is required.
 ```
 
 ## Scenario 1 — Single-point one-shot mask (US1, first feature to test)
@@ -41,7 +43,7 @@ organ-masker-lite mask input.ome.zarr output.ome.zarr \
 
 Expected:
 - Exit code 0.
-- `output.ome.zarr` validates (`ome-zarr-models validate output.ome.zarr` exits 0).
+- `output.ome.zarr` is a valid OME-Zarr v0.5 store (validated in-process via `ome-zarr-models`).
 - Output has the **same number of levels** as `input.ome.zarr`.
 - Foreground includes the prompted location. (Contract C-CLI-1)
 

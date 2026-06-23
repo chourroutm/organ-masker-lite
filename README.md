@@ -10,7 +10,7 @@ identical results for identical inputs.
 
 ## Features
 
-- OME-Zarr v0.5 in, OME-Zarr v0.5 mask out, validated with `ome-zarr-models validate`.
+- OME-Zarr v0.5 in, OME-Zarr v0.5 mask out, validated in-process by the bundled `ome-zarr-models`.
 - SAM2 (default) and SAM3 as first-class, interchangeable backends.
 - Single- or multi-axis sweeps with forward or forward-and-reverse propagation; majority / union /
   intersection consensus. In multi-axis runs you prompt one plane and the other axes are seeded
@@ -32,8 +32,9 @@ pip install -e ".[interactive]"          # optional napari viewer
 pip install -e ".[dev]"                  # tests + linting
 ```
 
-`ome-zarr-models` must be importable and its `ome-zarr-models validate` CLI on `PATH`. A CUDA GPU
-(>= 8 GB) is recommended for the real backends; weights auto-download into `./organ_masker_models`
+OME-Zarr v0.5 input validation is provided by the bundled `ome-zarr-models` dependency and runs
+in-process, so a plain install is enough -- no validator command needs to be on your `PATH`. A CUDA
+GPU (>= 8 GB) is recommended for the real backends; weights auto-download into `./organ_masker_models`
 on first use (override with `--model-dir` / `ORGAN_MASKER_MODEL_DIR`, or use `--no-download` with
 pre-placed weights for offline use).
 
