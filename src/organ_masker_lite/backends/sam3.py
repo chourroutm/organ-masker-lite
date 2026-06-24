@@ -12,12 +12,20 @@ resolves its own weights from the Hugging Face Hub (``facebook/sam3``) on first 
 Set ``ORGAN_MASKER_SAM3_CHECKPOINT`` to a local ``.pt`` path (absolute, or relative to the run's
 model directory) to use a specific checkpoint file instead of the Hub default. Inference uses
 SAM3's request-dispatch session API (``start_session`` / ``add_prompt`` / ``propagate_in_video``).
+
+SAM3's text encoder also needs a BPE tokenizer vocab (``bpe_simple_vocab_16e6.txt.gz``). Plain
+``pip install`` builds of ``sam3`` may omit this bundled asset, and the path sam3 derives for it
+varies by version, so this adapter resolves the vocab itself into the run's model directory
+(downloading the standard CLIP vocab on first use unless downloads are disabled) and passes it as
+an explicit ``bpe_path``. Override the location with ``ORGAN_MASKER_SAM3_BPE`` (a local path) or the
+source with ``ORGAN_MASKER_SAM3_BPE_URL``.
 """
 
 from __future__ import annotations
 
 import os
 import tempfile
+import urllib.request
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -30,6 +38,16 @@ from ..prompts.model import PromptSet
 #: Face Hub; set this to a local ``.pt`` path (absolute or relative to the run's model directory)
 #: to pin a specific checkpoint file.
 _CHECKPOINT_ENV = "ORGAN_MASKER_SAM3_CHECKPOINT"
+
+#: BPE tokenizer vocab sam3's text encoder requires. The standard CLIP vocab (sam3's tokenizer is
+#: CLIP-derived); resolved into the run's model directory unless overridden. ``_BPE_ENV`` pins a
+#: local path; ``_BPE_URL`` overrides the download source.
+_BPE_FILENAME = "bpe_simple_vocab_16e6.txt.gz"
+_BPE_ENV = "ORGAN_MASKER_SAM3_BPE"
+_BPE_URL = os.environ.get(
+    "ORGAN_MASKER_SAM3_BPE_URL",
+    "https://github.com/openai/CLIP/raw/main/clip/bpe_simple_vocab_16e6.txt.gz",
+)
 
 
 class Sam3Backend:
@@ -76,15 +94,49 @@ class Sam3Backend:
             os.environ.setdefault("HF_HUB_OFFLINE", "1")
         return None
 
+    def _resolve_bpe(self) -> str | None:
+        """Resolve the BPE tokenizer vocab, downloading it on first use unless disabled.
+
+        Returns an explicit path so sam3's (version-dependent) default lookup is bypassed, or
+        ``None`` only when downloads are disabled and no local copy exists -- in which case sam3
+        falls back to whatever vocab its install bundles (and raises its own clear error if none).
+        """
+        override = os.environ.get(_BPE_ENV)
+        if override:
+            bpe = Path(override)
+            if not bpe.is_absolute():
+                bpe = self._config.resolved_model_dir() / override
+            if bpe.exists():
+                return str(bpe)
+            if not self._config.allow_download:
+                raise FileNotFoundError(
+                    f"SAM3 tokenizer vocab not found at {bpe} and downloads are disabled "
+                    f"(--no-download); place the file there or allow downloads."
+                )
+        model_dir = self._config.resolved_model_dir()
+        bpe = model_dir / _BPE_FILENAME
+        if bpe.exists():
+            return str(bpe)
+        if not self._config.allow_download:
+            return None
+        model_dir.mkdir(parents=True, exist_ok=True)
+        tmp = bpe.with_suffix(bpe.suffix + ".part")
+        urllib.request.urlretrieve(_BPE_URL, tmp)  # noqa: S310 (operator-configured URL)
+        tmp.replace(bpe)
+        return str(bpe)
+
     def _get_predictor(self):
-        """Build the video predictor once (weights + device) and cache it."""
+        """Build the video predictor once (weights + tokenizer vocab + device) and cache it."""
         if self._predictor is None:
             torch = self._torch
             ckpt = self._resolve_checkpoint()
+            bpe = self._resolve_bpe()
             gpus = [torch.cuda.current_device()] if torch.cuda.is_available() else None
             kwargs: dict = {"gpus_to_use": gpus}
             if ckpt is not None:
                 kwargs["checkpoint_path"] = ckpt
+            if bpe is not None:
+                kwargs["bpe_path"] = bpe
             self._predictor = self._build(**kwargs)
         return self._predictor
 
