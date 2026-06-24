@@ -38,6 +38,35 @@ GPU (>= 8 GB) is recommended for the real backends; weights auto-download into `
 on first use (override with `--model-dir` / `ORGAN_MASKER_MODEL_DIR`, or use `--no-download` with
 pre-placed weights for offline use).
 
+### SAM3 backend
+
+The SAM3 backend needs two assets that the published `sam3` package does not bundle, so this
+adapter provisions both for you. No setup is required beyond Hugging Face access:
+
+- **Gated weights.** SAM3's weights live in the gated Hugging Face repo
+  [`facebook/sam3`](https://huggingface.co/facebook/sam3). Request access there (accept the license
+  and wait for approval), then authenticate so the download succeeds:
+
+  ```bash
+  huggingface-cli login          # or: export HF_TOKEN=hf_...
+  ```
+
+  If you are not authenticated, the backend fails fast with guidance instead of a raw 401. To skip
+  the Hub download entirely, point `ORGAN_MASKER_SAM3_CHECKPOINT` at a local weights file (absolute,
+  or relative to the run's model directory).
+
+- **Tokenizer vocab.** SAM3's text encoder needs the CLIP BPE vocab
+  (`bpe_simple_vocab_16e6.txt.gz`). The adapter downloads it into the run's model directory on first
+  use (unless `--no-download` is set). Override the location with `ORGAN_MASKER_SAM3_BPE` (a local
+  path) or the download source with `ORGAN_MASKER_SAM3_BPE_URL`.
+
+| Variable | Purpose |
+|----------|---------|
+| `HF_TOKEN` / `huggingface-cli login` | Authenticate to download the gated `facebook/sam3` weights. |
+| `ORGAN_MASKER_SAM3_CHECKPOINT` | Use a local weights file instead of the Hub download. |
+| `ORGAN_MASKER_SAM3_BPE` | Use a local BPE tokenizer vocab instead of downloading it. |
+| `ORGAN_MASKER_SAM3_BPE_URL` | Override the BPE vocab download source. |
+
 ## CLI
 
 ```bash
