@@ -49,6 +49,26 @@ _BPE_URL = os.environ.get(
     "https://github.com/openai/CLIP/raw/main/clip/bpe_simple_vocab_16e6.txt.gz",
 )
 
+#: Guidance shown when SAM3's default weight download hits the gated ``facebook/sam3`` Hub repo.
+_GATED_HINT = (
+    "SAM3 weights live in the gated Hugging Face repo 'facebook/sam3'. Request access at "
+    "https://huggingface.co/facebook/sam3 and authenticate (run 'huggingface-cli login' or set "
+    "HF_TOKEN), then retry. Alternatively, point ORGAN_MASKER_SAM3_CHECKPOINT at a local weights "
+    "file to skip the Hub download."
+)
+
+
+def _is_gated_repo_error(exc: BaseException) -> bool:
+    """True if ``exc`` (or its cause chain) is a Hugging Face gated-repo / auth (401) error."""
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if type(cur).__name__ in {"GatedRepoError", "RepositoryNotFoundError"}:
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
+
 
 class Sam3Backend:
     """Adapter over SAM3's video predictor (``build_sam3_video_predictor``)."""
@@ -137,7 +157,12 @@ class Sam3Backend:
                 kwargs["checkpoint_path"] = ckpt
             if bpe is not None:
                 kwargs["bpe_path"] = bpe
-            self._predictor = self._build(**kwargs)
+            try:
+                self._predictor = self._build(**kwargs)
+            except Exception as exc:  # noqa: BLE001
+                if _is_gated_repo_error(exc) and ckpt is None:
+                    raise RuntimeError(_GATED_HINT) from exc
+                raise
         return self._predictor
 
     @staticmethod
