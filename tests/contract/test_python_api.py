@@ -6,7 +6,6 @@ torch/GPU/weights.
 
 from __future__ import annotations
 
-import importlib.util
 import inspect
 
 import numpy as np
@@ -16,6 +15,8 @@ from organ_masker_lite import OrganMaskPredictor
 from organ_masker_lite.io.reader import OmeZarrReader
 from organ_masker_lite.io.validate import validate_ome_zarr
 from organ_masker_lite.prompts.model import PromptError
+
+from ..conftest import real_backend_available
 
 
 def _predictor(store, level=0):
@@ -90,13 +91,11 @@ def test_c_api_9_argument_names_and_shapes_match_sam2():
     assert box_params == ["self", "frame_index", "box", "obj_id"]
 
 
-_HAVE_SAM3 = (
-    importlib.util.find_spec("torch") is not None and importlib.util.find_spec("sam3") is not None
-)
+_HAVE_SAM3 = real_backend_available("sam3")
 
 
 @pytest.mark.real_backend
-@pytest.mark.skipif(not _HAVE_SAM3, reason="torch/sam3 not installed")
+@pytest.mark.skipif(not _HAVE_SAM3, reason="sam3 backend not constructable (torch/sam3 missing)")
 def test_c_api_7_sam3_backend_runs_same_flow(single_blob_zarr, tmp_path):
     store, (cx, cy), frame = single_blob_zarr
     p = OrganMaskPredictor(backend="sam3").set_volume(store, level=0)

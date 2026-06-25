@@ -118,3 +118,22 @@ def stub_backend():
 # Register the stubs so CLI/integration tests can select them via --backend.
 register_backend("stub", lambda options: StubBackend())
 register_backend("stub_dilate", lambda options: StubBackendDilate())
+
+
+def real_backend_available(name: str) -> bool:
+    """True only if the named real backend can actually be constructed.
+
+    Used by ``real_backend`` skip guards. This attempts construction rather than checking
+    ``importlib.util.find_spec(name)``, because a module merely *named* like a backend may be
+    discoverable on the path yet not provide the real predictor (an unrelated ``sam3`` package,
+    a partial install, etc.). Construction performs the same deferred ``torch``/``samN`` import the
+    backend uses and raises ``ImportError`` when the dependency is genuinely unusable, so the guard
+    skips rather than hard-failing in that case.
+    """
+    from organ_masker_lite.backends.registry import get_backend
+
+    try:
+        get_backend(name)
+    except ImportError:
+        return False
+    return True
