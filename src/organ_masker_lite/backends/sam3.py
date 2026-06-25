@@ -210,21 +210,30 @@ class Sam3Backend:
 
     @classmethod
     def _init_box(cls, group: list, height: int, width: int) -> tuple[int, list[float]] | None:
-        """Pick a frame + ``[x, y, w, h]`` init box for one object's prompts.
+        """Pick a frame + normalised ``[x, y, w, h]`` init box for one object's prompts.
 
         Prefers an explicit box (converted from ``[x0, y0, x1, y1]``); otherwise synthesises one
-        around the first prompt that carries positive points. Returns ``None`` if the object has
-        neither (nothing to initialise from).
+        around the first prompt that carries positive points. The pixel box is normalised to the
+        0--1 range SAM3's box prompt expects (``xmin/W, ymin/H, w/W, h/H``). Returns ``None`` if
+        the object has neither a box nor positive points (nothing to initialise from).
         """
+        box_px: list[float] | None = None
+        frame_index = 0
         for p in group:
             if p.box is not None:
                 x0, y0, x1, y1 = (float(v) for v in p.box)
-                return p.frame_index, [x0, y0, x1 - x0, y1 - y0]
-        for p in group:
-            pos = p.positive_coords
-            if pos.size:
-                return p.frame_index, cls._synth_box_xywh(pos, height, width)
-        return None
+                box_px, frame_index = [x0, y0, x1 - x0, y1 - y0], p.frame_index
+                break
+        if box_px is None:
+            for p in group:
+                pos = p.positive_coords
+                if pos.size:
+                    box_px, frame_index = cls._synth_box_xywh(pos, height, width), p.frame_index
+                    break
+        if box_px is None:
+            return None
+        x, y, w, h = box_px
+        return frame_index, [x / width, y / height, w / width, h / height]
 
     def _propagate(self, predictor, session_id: str, out: np.ndarray) -> None:
         """Stream ``propagate_in_video`` and write each frame's reduced mask into ``out``."""
@@ -288,17 +297,20 @@ class Sam3Backend:
                     self._propagate(predictor, session_id, out)
                     # Phase 2: replay points as refinements on the now-cached frames.
                     refined = False
+                    scale = np.array([width, height], dtype="float32")
                     for obj_id, group in by_obj.items():
                         for p in group:
                             if not p.point_coords.size:
                                 continue
+                            # SAM3's tracker points are normalised (rel_coordinates) to 0--1.
+                            points = (p.point_coords.astype("float32") / scale).tolist()
                             predictor.handle_request(
                                 {
                                     "type": "add_prompt",
                                     "session_id": session_id,
                                     "frame_index": p.frame_index,
                                     "obj_id": obj_id,
-                                    "points": p.point_coords.astype("float32").tolist(),
+                                    "points": points,
                                     "point_labels": p.point_labels.astype("int32").tolist(),
                                 }
                             )
