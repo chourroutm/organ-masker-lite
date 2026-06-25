@@ -3,11 +3,25 @@
 from __future__ import annotations
 
 import os
+import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
 DEFAULT_MODEL_DIR = "organ_masker_models"
 MODEL_DIR_ENV = "ORGAN_MASKER_MODEL_DIR"
+
+#: A weight fetcher: download the file at ``url`` to the local path ``dest``. Injectable so the
+#: resolution logic can be tested without touching the network (see ``RunConfig.resolve_weight``).
+WeightDownloader = Callable[[str, Path], None]
+
+
+def default_weight_downloader(url: str, dest: Path) -> None:
+    """Download ``url`` to ``dest`` atomically via a temporary ``.part`` file (FR-020)."""
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    urllib.request.urlretrieve(url, tmp)  # noqa: S310 (trusted, operator-configured weight URL)
+    tmp.replace(dest)
+
 
 DEFAULT_LOG_DIR = "organ_masker_logs"
 LOG_DIR_ENV = "ORGAN_MASKER_LOG_DIR"
@@ -81,6 +95,37 @@ class RunConfig:
         if env:
             return Path(env)
         return Path.cwd() / DEFAULT_MODEL_DIR
+
+    def resolve_weight(
+        self,
+        filename: str,
+        url: str,
+        *,
+        description: str = "weights",
+        downloader: WeightDownloader | None = None,
+    ) -> Path:
+        """Resolve a weight file, auto-downloading it on first use unless disabled (FR-019/020).
+
+        ``filename`` is used as-is if absolute, otherwise resolved under
+        :meth:`resolved_model_dir`. If the file already exists it is used as-is (no download). When
+        it is absent and downloads are allowed, it is fetched from ``url`` via ``downloader`` (the
+        injectable seam; defaults to :func:`default_weight_downloader`). When downloads are disabled
+        (``allow_download=False``) and the file is missing, a clear :class:`FileNotFoundError`
+        naming ``description`` is raised rather than reaching for the network.
+        """
+        path = Path(filename)
+        if not path.is_absolute():
+            path = self.resolved_model_dir() / filename
+        if path.exists():
+            return path
+        if not self.allow_download:
+            raise FileNotFoundError(
+                f"{description} not found at {path} and downloads are disabled "
+                f"(--no-download); place the file there or allow downloads."
+            )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        (downloader or default_weight_downloader)(url, path)
+        return path
 
     def to_record(self) -> dict:
         """Serialize the configuration for the reproducibility run-record (FR-014)."""

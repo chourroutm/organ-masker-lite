@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import urllib.request
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -56,21 +55,8 @@ class Sam2Backend:
 
     def _resolve_checkpoint(self) -> Path:
         """Resolve the checkpoint path, downloading it on first use unless disabled (FR-019/020)."""
-        model_dir = self._config.resolved_model_dir()
         filename = os.environ.get(_CHECKPOINT_ENV, _DEFAULT_CHECKPOINT)
-        ckpt = model_dir / filename
-        if ckpt.exists():
-            return ckpt
-        if not self._config.allow_download:
-            raise FileNotFoundError(
-                f"SAM2 checkpoint not found at {ckpt} and downloads are disabled "
-                f"(--no-download); place the weights there or allow downloads."
-            )
-        model_dir.mkdir(parents=True, exist_ok=True)
-        tmp = ckpt.with_suffix(ckpt.suffix + ".part")
-        urllib.request.urlretrieve(_CHECKPOINT_URL, tmp)  # noqa: S310 (trusted FB CDN)
-        tmp.replace(ckpt)
-        return ckpt
+        return self._config.resolve_weight(filename, _CHECKPOINT_URL, description="SAM2 checkpoint")
 
     def _get_predictor(self):
         """Build the video predictor once (config + checkpoint + device) and cache it."""

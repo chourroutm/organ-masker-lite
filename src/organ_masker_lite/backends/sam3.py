@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import urllib.request
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -130,27 +129,17 @@ class Sam3Backend:
         """
         override = os.environ.get(_BPE_ENV)
         if override:
-            bpe = Path(override)
-            if not bpe.is_absolute():
-                bpe = self._config.resolved_model_dir() / override
-            if bpe.exists():
-                return str(bpe)
-            if not self._config.allow_download:
-                raise FileNotFoundError(
-                    f"SAM3 tokenizer vocab not found at {bpe} and downloads are disabled "
-                    f"(--no-download); place the file there or allow downloads."
-                )
-        model_dir = self._config.resolved_model_dir()
-        bpe = model_dir / _BPE_FILENAME
-        if bpe.exists():
-            return str(bpe)
+            return str(
+                self._config.resolve_weight(override, _BPE_URL, description="SAM3 tokenizer vocab")
+            )
+        # No override: when downloads are disabled and no local copy exists, return None so sam3
+        # falls back to whatever vocab its install bundles (rather than raising).
         if not self._config.allow_download:
-            return None
-        model_dir.mkdir(parents=True, exist_ok=True)
-        tmp = bpe.with_suffix(bpe.suffix + ".part")
-        urllib.request.urlretrieve(_BPE_URL, tmp)  # noqa: S310 (operator-configured URL)
-        tmp.replace(bpe)
-        return str(bpe)
+            local = self._config.resolved_model_dir() / _BPE_FILENAME
+            return str(local) if local.exists() else None
+        return str(
+            self._config.resolve_weight(_BPE_FILENAME, _BPE_URL, description="SAM3 tokenizer vocab")
+        )
 
     def _get_predictor(self):
         """Build the video predictor once (weights + tokenizer vocab + device) and cache it."""
